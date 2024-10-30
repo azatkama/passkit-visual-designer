@@ -20,6 +20,7 @@ interface SelectorState {
 
 interface SelectorProps extends DispatchProps {
 	pushHistory(path: string, init?: Function): void;
+	creatorUrl: string;
 }
 
 class PassSelector extends React.PureComponent<SelectorProps, SelectorState> {
@@ -64,7 +65,7 @@ class PassSelector extends React.PureComponent<SelectorProps, SelectorState> {
 	 */
 
 	onAlternativeSelection(passProps: PassMixedProps) {
-		this.props.pushHistory("/creator", () => this.props.setPassProps(passProps));
+		this.props.pushHistory(this.props.creatorUrl, () => this.props.setPassProps(passProps));
 	}
 
 	render() {

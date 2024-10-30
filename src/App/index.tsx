@@ -379,7 +379,10 @@ function App(props: Props): JSX.Element {
 							return !__DEV__ && history.action === "POP" ? (
 								<Redirect to={url} />
 							) : (
-								<PassSelector pushHistory={changePathWithLoading} />
+								<PassSelector
+									pushHistory={changePathWithLoading}
+									creatorUrl={creatorUrl}
+								/>
 							);
 						}}
 					</Route>
