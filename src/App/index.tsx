@@ -377,7 +377,7 @@ function App(props: Props): JSX.Element {
 							 * /creation will be handled by history.listen above
 							 */
 							return !__DEV__ && history.action === "POP" ? (
-								<Redirect to="/" />
+								<Redirect to={url} />
 							) : (
 								<PassSelector pushHistory={changePathWithLoading} />
 							);
@@ -386,7 +386,7 @@ function App(props: Props): JSX.Element {
 					<Route path={creatorUrl}>
 						{/** Let's play monopoly. You landed to /creator. Go to home without passing Go! */}
 						{() =>
-							!(__DEV__ || store.getState()?.pass?.kind) ? <Redirect to="/" /> : <Configurator />
+							!(__DEV__ || store.getState()?.pass?.kind) ? <Redirect to={url} /> : <Configurator />
 						}
 					</Route>
 				</Switch>
