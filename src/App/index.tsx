@@ -96,6 +96,9 @@ function App(props: Props): JSX.Element {
 
 	const history = useHistory();
 	const location = useLocation();
+	const url = props.url;
+	const selectUrl = `${url}/select`;
+	const creatorUrl = `${url}/creator`;
 
 	const wrapLoading = React.useCallback(
 		async (phase: Function, minTimeBeforeExecution?: number, minTimeBeforeCompletion?: number) => {
@@ -293,7 +296,7 @@ function App(props: Props): JSX.Element {
 					});
 
 					initializeStore(snapshot);
-					history.push(`${props.url}/creator`);
+					history.push(creatorUrl);
 				},
 				LOADING_TIME_MS,
 				LOADING_TIME_MS
@@ -317,7 +320,7 @@ function App(props: Props): JSX.Element {
 	React.useEffect(() => {
 		const unlisten = history.listen(async (nextLocation, action) => {
 			if (action === "POP") {
-				if (location.pathname === `${props.url}/creator` && nextLocation.pathname === `${props.url}/select`) {
+				if (location.pathname === creatorUrl && nextLocation.pathname === selectUrl) {
 					history.replace(props.url);
 				}
 
@@ -356,16 +359,18 @@ function App(props: Props): JSX.Element {
 				mountOnEnter
 			>
 				<Switch location={location}>
-					<Route path={props.url} exact>
+					<Route path={url} exact>
 						<RecentSelector
 							recentProjects={forageData?.projects ?? {}}
 							requestForageDataRequest={refreshForageCallback}
 							initStore={initializeStoreByProjectID}
 							pushHistory={changePathWithLoading}
 							createProjectFromArchive={createProjectFromArchive}
+							selectUrl={selectUrl}
+							creatorUrl={creatorUrl}
 						/>
 					</Route>
-					<Route path={`${props.url}/select`}>
+					<Route path={selectUrl}>
 						{() => {
 							/**
 							 * This condition is for startup. The navigation from
@@ -378,7 +383,7 @@ function App(props: Props): JSX.Element {
 							);
 						}}
 					</Route>
-					<Route path={`${props.url}/creator`}>
+					<Route path={creatorUrl}>
 						{/** Let's play monopoly. You landed to /creator. Go to home without passing Go! */}
 						{() =>
 							!(__DEV__ || store.getState()?.pass?.kind) ? <Redirect to="/" /> : <Configurator />

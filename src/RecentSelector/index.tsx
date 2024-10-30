@@ -23,6 +23,8 @@ interface Props {
 	initStore(projectID: string): Promise<void>;
 	pushHistory(path: string, init?: Function): void;
 	createProjectFromArchive(data: StateLookalike): void;
+	selectUrl: string;
+	creatorUrl: string;
 }
 
 interface State {
@@ -139,7 +141,7 @@ export default class RecentSelector extends React.Component<Props, State> {
 	}
 
 	async selectRecent(id: string) {
-		this.props.pushHistory("/creator", () => this.props.initStore(id));
+		this.props.pushHistory(this.props.creatorUrl, () => this.props.initStore(id));
 	}
 
 	async processUploadedFile(event: React.FormEvent<HTMLInputElement>) {
@@ -391,7 +393,7 @@ export default class RecentSelector extends React.Component<Props, State> {
 							<div id="choices-box" className={this.state.isProcessingZipFile ? "loading" : ""}>
 								<div
 									onClick={() =>
-										!this.state.isProcessingZipFile && this.props.pushHistory("/select")
+										!this.state.isProcessingZipFile && this.props.pushHistory(this.props.selectUrl)
 									}
 								>
 									<AddIcon width="32px" height="32px" />
