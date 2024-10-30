@@ -1,6 +1,5 @@
 import * as React from "react";
 import { v1 as uuid } from "uuid";
-import "./style.less";
 import type { Constants, PassMixedProps } from "@pkvd/pass";
 import { FieldsAddIcon } from "./icons";
 import Drawer from "./Drawer";

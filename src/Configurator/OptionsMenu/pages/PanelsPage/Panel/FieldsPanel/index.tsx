@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import { Constants } from "@pkvd/pass";
 import { SharedPanelProps } from "..";
 import { FieldsArrowIcon } from "./icons";

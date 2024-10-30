@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import { PassMediaProps } from "@pkvd/pass";
 import { SharedPanelProps } from "..";
 import CapitalHeaderTitle from "../../../components/CapitalHeaderTitle";

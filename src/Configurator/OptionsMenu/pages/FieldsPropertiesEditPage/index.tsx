@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import { Constants, PassMixedProps } from "@pkvd/pass";
 import * as Store from "@pkvd/store";
 import PageHeader from "../components/Header";

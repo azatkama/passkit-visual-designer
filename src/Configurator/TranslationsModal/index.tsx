@@ -5,7 +5,6 @@ import LanguageSelectionButton from "../LanguageSelectionButton";
 import Modal, { ModalProps } from "../ModalBase";
 import { Switcher } from "../Switcher";
 import { DeleteIcon, AddIcon } from "./icons";
-import "./style.less";
 
 const TranslationChangePlaceholder = 0b001;
 const TranslationChangeValue = 0b010;

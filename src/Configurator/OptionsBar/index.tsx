@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import { ShowMoreIcon, EyeVisibleIcon, EyeInvisibleIcon, TranslationsIcon } from "./icons";
 
 interface Props {

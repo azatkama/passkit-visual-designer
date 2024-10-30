@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import { DeleteFieldIcon, ListAddProp } from "./icons";
 import FieldOrderHandler, { Directions } from "./FieldOrderHandler";
 

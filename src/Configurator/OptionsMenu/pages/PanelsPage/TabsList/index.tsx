@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import { createClassName } from "../../../../../utils";
 import { DataGroup } from "..";
 

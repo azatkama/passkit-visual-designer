@@ -3,7 +3,6 @@ import { v1 as uuid } from "uuid";
 import type { IdentifiedResolutions, MediaCollection } from "@pkvd/store";
 import { getArrayBuffer } from "../../../utils";
 import { DeleteIcon, PlusIcon } from "../icons";
-import "./style.less";
 
 const NAME_RESOLUTION_REGEX = /@(\dx)\..+$/;
 

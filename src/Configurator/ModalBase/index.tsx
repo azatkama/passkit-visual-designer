@@ -1,6 +1,5 @@
 import * as React from "react";
 import ModalCloseIcon from "./icons";
-import "./style.less";
 
 /**
  * Generic component to create a modal window

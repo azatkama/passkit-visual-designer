@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import { Field, FieldLabel, FieldValue } from "../../components/Field";
 import { useRegistrations } from "../useRegistrations";
 import { FieldKind } from "../../../../model";

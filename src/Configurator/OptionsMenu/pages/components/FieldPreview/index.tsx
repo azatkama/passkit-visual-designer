@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import { Constants } from "@pkvd/pass";
 import { createClassName } from "../../../../../utils";
 import CommittableTextInput from "../../../../CommittableTextInput";

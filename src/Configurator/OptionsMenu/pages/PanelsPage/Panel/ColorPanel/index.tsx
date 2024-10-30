@@ -3,7 +3,6 @@ import { TwitterPicker, RGBColor, ColorState } from "react-color";
 import { SharedPanelProps } from "..";
 import useContentSavingHandler from "../useContentSavingHandler";
 import CapitalHeaderTitle from "../../../components/CapitalHeaderTitle";
-import "./style.less";
 import { FieldKind } from "../../../../../../model";
 
 interface ColorPanelProps extends SharedPanelProps {

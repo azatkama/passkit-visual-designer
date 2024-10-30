@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import { InteractionContext, PassMediaProps, PassMixedProps } from "@pkvd/pass";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
@@ -521,51 +520,49 @@ function getBestResolutionForMedia(
 	return best;
 }
 
-export default withRouter(
-	connect(
-		(state: Store.State): ConfiguratorStore => {
-			const { pass, media, projectOptions, translations } = state;
+export default connect(
+	(state: Store.State): ConfiguratorStore => {
+		const { pass, media, projectOptions, translations } = state;
 
-			const usedLanguages = new Set(
-				[
-					/**
-					 * Seeking for medias or translations that have
-					 * contents for current language
-					 */
-					...Object.entries(media).filter(([_, mediaSet]) => hasMediaContents(mediaSet)),
-					...Object.entries(translations).filter(
-						([_, translationSet]) => Object.keys(translationSet.translations).length
-					),
-				].map(([language]) => language)
-			);
+		const usedLanguages = new Set(
+			[
+				/**
+				 * Seeking for medias or translations that have
+				 * contents for current language
+				 */
+				...Object.entries(media).filter(([_, mediaSet]) => hasMediaContents(mediaSet)),
+				...Object.entries(translations).filter(
+					([_, translationSet]) => Object.keys(translationSet.translations).length
+				),
+			].map(([language]) => language)
+		);
 
-			const passPropsWithSelectedMediaUrl = Object.assign(
-				{},
-				pass,
-				getBestResolutionForMedia(media, projectOptions.activeMediaLanguage)
-			);
+		const passPropsWithSelectedMediaUrl = Object.assign(
+			{},
+			pass,
+			getBestResolutionForMedia(media, projectOptions.activeMediaLanguage)
+		);
 
-			return {
-				passProps: passPropsWithSelectedMediaUrl,
-				media,
-				translations,
-				usedLanguages,
-				projectOptions,
-			};
-		},
-		{
-			changePassPropValue: Store.Pass.setProp,
-			setProjectOption: Store.Options.Set,
-			setMediaActiveCollection: Store.Media.SetActiveCollection,
-			editCollection: Store.Media.EditCollection,
-			setMediaExportState: Store.Media.SetExportState,
-			setTranslationExportState: Store.Translations.SetExportState,
-			addTranslation: Store.Translations.Add,
-			removeTranslation: Store.Translations.Remove,
-			editTranslation: Store.Translations.Edit,
-		} as DispatchProps
-	)(Configurator)
-);
+		return {
+			passProps: passPropsWithSelectedMediaUrl,
+			media,
+			translations,
+			usedLanguages,
+			projectOptions,
+		};
+	},
+	{
+		changePassPropValue: Store.Pass.setProp,
+		setProjectOption: Store.Options.Set,
+		setMediaActiveCollection: Store.Media.SetActiveCollection,
+		editCollection: Store.Media.EditCollection,
+		setMediaExportState: Store.Media.SetExportState,
+		setTranslationExportState: Store.Translations.SetExportState,
+		addTranslation: Store.Translations.Add,
+		removeTranslation: Store.Translations.Remove,
+		editTranslation: Store.Translations.Edit,
+	} as DispatchProps
+)(Configurator);
 
 function hasMediaContents(media: Store.MediaSet) {
 	return Object.values(media).some(

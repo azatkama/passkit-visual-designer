@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import FieldsArrowIcon from "../../../../icons";
 
 export const enum Directions {

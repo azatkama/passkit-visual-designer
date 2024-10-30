@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import { PassKind } from "../model";
 import * as Layouts from "./layouts";
 import {

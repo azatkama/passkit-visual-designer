@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import FieldsRow from "../FieldRow";
 import { PassField } from "../../../constants";
 

@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import { SelectableComponent } from "../../sections/useRegistrations";
 import { createClassName } from "../../../../utils";
 import useFallback from "../useFallback";

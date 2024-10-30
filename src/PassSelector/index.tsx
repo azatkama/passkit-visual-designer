@@ -1,6 +1,5 @@
 import * as React from "react";
 import { connect } from "react-redux";
-import "./style.less";
 import { PassMixedProps } from "@pkvd/pass";
 import { PassKind } from "../model";
 import PassList from "./PassList";

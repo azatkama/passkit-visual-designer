@@ -67,7 +67,7 @@ const store = createStore(
  * in App component below
  */
 
-export default function AppRoutingLoaderContainer() {
+export default function AppRoutingLoaderContainer({ url = '/', ...rest }) {
 	const [isLoading, setLoading] = React.useState(true);
 
 	return (
@@ -76,7 +76,11 @@ export default function AppRoutingLoaderContainer() {
 				<CSSTransition mountOnEnter unmountOnExit in={isLoading} timeout={500}>
 					<LoaderFace />
 				</CSSTransition>
-				<App setLoading={setLoading} />
+				<App
+					setLoading={setLoading}
+					url={url}
+					{...rest}
+				/>
 			</Router>
 		</Provider>
 	);
@@ -84,6 +88,7 @@ export default function AppRoutingLoaderContainer() {
 
 interface Props {
 	setLoading(state: React.SetStateAction<boolean>): void;
+	url: string;
 }
 
 function App(props: Props): JSX.Element {
@@ -288,7 +293,7 @@ function App(props: Props): JSX.Element {
 					});
 
 					initializeStore(snapshot);
-					history.push("/creator");
+					history.push(`${props.url}/creator`);
 				},
 				LOADING_TIME_MS,
 				LOADING_TIME_MS
@@ -312,8 +317,8 @@ function App(props: Props): JSX.Element {
 	React.useEffect(() => {
 		const unlisten = history.listen(async (nextLocation, action) => {
 			if (action === "POP") {
-				if (location.pathname === "/creator" && nextLocation.pathname === "/select") {
-					history.replace("/");
+				if (location.pathname === `${props.url}/creator` && nextLocation.pathname === `${props.url}/select`) {
+					history.replace(props.url);
 				}
 
 				wrapLoading(
@@ -351,7 +356,7 @@ function App(props: Props): JSX.Element {
 				mountOnEnter
 			>
 				<Switch location={location}>
-					<Route path="/" exact>
+					<Route path={props.url} exact>
 						<RecentSelector
 							recentProjects={forageData?.projects ?? {}}
 							requestForageDataRequest={refreshForageCallback}
@@ -360,7 +365,7 @@ function App(props: Props): JSX.Element {
 							createProjectFromArchive={createProjectFromArchive}
 						/>
 					</Route>
-					<Route path="/select">
+					<Route path={`${props.url}/select`}>
 						{() => {
 							/**
 							 * This condition is for startup. The navigation from
@@ -373,7 +378,7 @@ function App(props: Props): JSX.Element {
 							);
 						}}
 					</Route>
-					<Route path="/creator">
+					<Route path={`${props.url}/creator`}>
 						{/** Let's play monopoly. You landed to /creator. Go to home without passing Go! */}
 						{() =>
 							!(__DEV__ || store.getState()?.pass?.kind) ? <Redirect to="/" /> : <Configurator />

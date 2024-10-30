@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import Modal, { ModalProps } from "../ModalBase";
 import { languages } from "./languages";
 import { createClassName } from "../../utils";

@@ -1,6 +1,5 @@
 import * as React from "react";
 import Prism from "prismjs";
-import "./style.less";
 import { PassMixedProps } from "@pkvd/pass";
 import { createClassName } from "../../utils";
 import Modal, { ModalProps } from "../ModalBase";

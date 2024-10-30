@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import { SharedPanelProps } from "..";
 import { FieldKind } from "../../../../../../model";
 import useContentSavingHandler from "../useContentSavingHandler";

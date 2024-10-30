@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import Pass, { PassMediaProps } from "@pkvd/pass";
 import Modal, { ModalProps } from "../ModalBase";
 import CollectionsList from "./CollectionsList";

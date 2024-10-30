@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import type { CollectionSet } from "@pkvd/store";
 import { DeleteIcon, EditIcon, PlusIcon } from "../icons";
 import type { CollectionEditOperation } from "..";

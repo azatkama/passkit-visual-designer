@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./style.less";
 import TextField from "../../components/TextField";
 import { useRegistrations } from "../useRegistrations";
 import ImageField from "../../components/ImageField";

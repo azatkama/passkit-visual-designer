@@ -5,7 +5,6 @@ import Code128 from "./code128";
 import PDF417 from "./pdf417";
 import Aztec from "./aztec";
 import { EmptyBarcode, EmptySquareCode } from "./empty";
-import "./style.less";
 import { createClassName } from "../../../../utils";
 
 interface BarcodeProps extends Partial<WalletPassFormat.Barcodes> {
