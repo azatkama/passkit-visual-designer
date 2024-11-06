@@ -3,8 +3,14 @@ import Pass, { PassProps, Constants, PassMixedProps } from "@pkvd/pass";
 import { createClassName } from "../../utils";
 import CommittableTextInput from "../CommittableTextInput";
 import type { TranslationsSet } from "@pkvd/store";
+import CommittableSelect from "../CommittableSelect";
 
 type PassField = Constants.PassField;
+
+export interface TemplateProps {
+	id: number;
+	name: string;
+}
 
 export interface ViewerProps extends Pick<PassProps, "showBack"> {
 	passProps: PassMixedProps;
@@ -12,11 +18,22 @@ export interface ViewerProps extends Pick<PassProps, "showBack"> {
 	showEmpty: boolean;
 	onVoidClick(e: React.MouseEvent): void;
 	projectTitle?: string;
+	projectTemplateId?: number;
 	changeProjectTitle(title: string): void;
+	changeProjectTemplateId(id: string|number|readonly string[]): void;
+	templates: Array<TemplateProps>;
 }
 
 export default function Viewer(props: ViewerProps) {
-	const { changeProjectTitle, onVoidClick, projectTitle = "", showBack, passProps } = props;
+	const {
+		changeProjectTitle,
+		changeProjectTemplateId,
+		onVoidClick,
+		projectTitle = "",
+		projectTemplateId = null,
+		showBack,
+		passProps
+	} = props;
 
 	const viewerCN = createClassName(["viewer"], {
 		"no-empty": !props.showEmpty,
@@ -46,6 +63,16 @@ export default function Viewer(props: ViewerProps) {
 					commit={changeProjectTitle}
 				/>
 			</div>
+			<div className="project-templates">
+				<CommittableSelect
+					defaultValue={projectTemplateId}
+					placeholder="Template"
+					commit={changeProjectTemplateId}
+					options={props.templates.map(({ id, name }) => {
+						return { value: id, label: name };
+					})}
+				/>
+			</div>
 			<Pass {...passUIProps} showBack={showBack} />
 		</div>
 	);
@@ -53,7 +80,7 @@ export default function Viewer(props: ViewerProps) {
 
 function localizeFieldContent(
 	field: PassField[],
-	translations: Array<TranslationsSet["translations"][0]>
+	translations: Array<TranslationsSet["translations"][0]>,
 ) {
 	if (!field) {
 		return field;

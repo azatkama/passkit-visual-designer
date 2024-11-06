@@ -20,6 +20,7 @@ import LoaderFace from "../Loader";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
 import { PassMediaProps, PassMixedProps } from "@pkvd/pass";
 import { v1 as uuid } from "uuid";
+import { TemplateProps } from "../Configurator/Viewer";
 
 export interface StateLookalike {
 	pass: Partial<PassMixedProps>;
@@ -67,7 +68,7 @@ const store = createStore(
  * in App component below
  */
 
-export default function AppRoutingLoaderContainer({ url = '/', ...rest }) {
+export default function AppRoutingLoaderContainer({ url = '/', templates = [], ...rest }) {
 	const [isLoading, setLoading] = React.useState(true);
 
 	return (
@@ -79,6 +80,7 @@ export default function AppRoutingLoaderContainer({ url = '/', ...rest }) {
 				<App
 					setLoading={setLoading}
 					url={url}
+					templates={templates}
 					{...rest}
 				/>
 			</Router>
@@ -89,6 +91,7 @@ export default function AppRoutingLoaderContainer({ url = '/', ...rest }) {
 interface Props {
 	setLoading(state: React.SetStateAction<boolean>): void;
 	url: string;
+	templates: Array<TemplateProps>;
 }
 
 function App(props: Props): JSX.Element {
@@ -389,7 +392,11 @@ function App(props: Props): JSX.Element {
 					<Route path={creatorUrl}>
 						{/** Let's play monopoly. You landed to /creator. Go to home without passing Go! */}
 						{() =>
-							!(__DEV__ || store.getState()?.pass?.kind) ? <Redirect to={url} /> : <Configurator />
+							!(__DEV__ || store.getState()?.pass?.kind) ? <Redirect to={url} /> : (
+								<Configurator
+									templates={props.templates}
+								/>
+							)
 						}
 					</Route>
 				</Switch>

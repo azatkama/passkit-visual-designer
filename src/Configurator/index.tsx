@@ -4,7 +4,7 @@ import { RouteComponentProps, withRouter } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
 import { connect } from "react-redux";
 import { v1 as uuid } from "uuid";
-import Viewer from "./Viewer";
+import Viewer, { TemplateProps } from "./Viewer";
 import OptionsBar from "./OptionsBar";
 import OptionsMenu from "./OptionsMenu";
 import { FieldKind } from "../model";
@@ -57,7 +57,10 @@ interface ConfiguratorStore {
 	translations: Store.State["translations"];
 }
 
-interface ConfiguratorProps extends ConfiguratorStore, DispatchProps, RouteComponentProps<any> {}
+interface ConfiguratorProps extends ConfiguratorStore, DispatchProps, RouteComponentProps<any> {
+	templates: Array<TemplateProps>;
+}
+
 interface ConfiguratorState {
 	selectedRegistered?: FieldDetails;
 	shouldShowPassBack: boolean;
@@ -92,6 +95,7 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 		this.toggleEmptyVisibility = this.toggleEmptyVisibility.bind(this);
 		this.requestExport = this.requestExport.bind(this);
 		this.changeProjectTitle = this.changeProjectTitle.bind(this);
+		this.changeProjectTemplateId = this.changeProjectTemplateId.bind(this);
 		this.toggleMediaModal = this.toggleMediaModal.bind(this);
 		this.onMediaCollectionEdit = this.onMediaCollectionEdit.bind(this);
 		this.onMediaCollectionUse = this.onMediaCollectionUse.bind(this);
@@ -255,6 +259,10 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 		this.props.setProjectOption("title", title);
 	}
 
+	changeProjectTemplateId(id: number) {
+		this.props.setProjectOption("templateId", id);
+	}
+
 	onActiveMediaLanguageChange(language: string) {
 		if (__DEV__) {
 			console.log("Selected new language:", language);
@@ -331,8 +339,7 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 
 	render() {
 		const { projectOptions, usedLanguages, translations, passProps, media } = this.props;
-
-		const { title, activeMediaLanguage } = projectOptions;
+		const { title, templateId, activeMediaLanguage } = projectOptions;
 
 		const {
 			shouldShowPassBack,
@@ -354,7 +361,10 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 							showBack={shouldShowPassBack}
 							showEmpty={emptyFieldsVisible}
 							projectTitle={title}
+							projectTemplateId={templateId}
 							changeProjectTitle={this.changeProjectTitle}
+							changeProjectTemplateId={this.changeProjectTemplateId}
+							templates={this.props.templates}
 						/>
 					</InteractionContext.Provider>
 					<OptionsBar

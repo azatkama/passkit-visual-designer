@@ -7,6 +7,7 @@
 	flex-grow: 1;
 	width: 100%;
 	cursor: pointer;
+	padding: 120px 0;
 
 	& > .pass {
 		cursor: initial;
@@ -31,7 +32,7 @@
 		position: absolute;
 		top: 30px;
 		left: 30px;
-		width: 200px;
+		width: 400px;
 		.lookMumIamAppearing(0.5s, ease-in-out, 2s);
 
 		& input {
@@ -52,7 +53,28 @@
 
 		&::before {
 			border-bottom: 0.5px solid #525252;
-			width: 0px;
+			width: 0;
+			content: "";
+			position: absolute;
+			height: 100%;
+			pointer-events: none;
+			transition: width 0.5s ease-in-out;
+		}
+
+		&:focus-within::before {
+			width: 100%;
+		}
+	}
+
+	& > .project-templates {
+		position: absolute;
+		top: 75px;
+		left: 30px;
+		width: 400px;
+		.lookMumIamAppearing(0.5s, ease-in-out, 2s);
+
+		&::before {
+			width: 0;
 			content: "";
 			position: absolute;
 			height: 100%;
