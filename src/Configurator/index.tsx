@@ -340,6 +340,7 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 	render() {
 		const { projectOptions, usedLanguages, translations, passProps, media } = this.props;
 		const { title, templateId, activeMediaLanguage } = projectOptions;
+		const template = this.props.templates.find((template) => template.id === templateId);
 
 		const {
 			shouldShowPassBack,
@@ -383,6 +384,7 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 						cancelFieldSelection={this.onVoidClick}
 						requestExport={(canBeExported && this.requestExport) || null}
 						onMediaEditRequest={this.toggleMediaModal}
+						templateParameters={template?.templateParameters || []}
 					/>
 				</div>
 				<CSSTransition

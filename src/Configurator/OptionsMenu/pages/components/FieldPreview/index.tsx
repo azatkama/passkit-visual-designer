@@ -2,6 +2,8 @@ import * as React from "react";
 import { Constants } from "@pkvd/pass";
 import { createClassName } from "../../../../../utils";
 import CommittableTextInput from "../../../../CommittableTextInput";
+import CommittableCreatableSelect from "../../../../CommittableCreatableSelect";
+import { TemplateParameterProps } from "../../../../Viewer";
 
 const { PKTextAlignment } = Constants;
 type PassField = Constants.PassField;
@@ -12,6 +14,7 @@ interface Props {
 	keyEditable?: boolean;
 	onClick?(): void;
 	onFieldKeyChange?(newValue: string): void;
+	templateParameters: Array<TemplateParameterProps>;
 }
 
 export default function FieldPreview(props: Props) {
@@ -45,11 +48,13 @@ export default function FieldPreview(props: Props) {
 	});
 
 	const fieldKeyRow = props.keyEditable ? (
-		<CommittableTextInput
-			onChange={(evt) => setKey(evt.target.value.replace(/\s+/, ""))}
-			value={key || ""}
+		<CommittableCreatableSelect
+			defaultValue={key}
 			placeholder="field's key"
-			commit={onFieldKeyChange}
+			commit={(value) => onFieldKeyChange(value.toString().replace(/\s+/, ""))}
+			options={props.templateParameters.map((parameter) => {
+				return ({ value: parameter.name, label: parameter.label });
+			})}
 		/>
 	) : (
 		<span>{!key ? "not setted" : key}</span>

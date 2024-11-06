@@ -4,6 +4,7 @@ import PanelsPage from "./pages/PanelsPage";
 import { FieldDetails } from "./pages/PanelsPage/Panel";
 import type RegistrationIndex from "../RegistrationIndex";
 import { usePageRelation, usePagesAmount } from "./navigation.utils";
+import { TemplateParameterProps } from "../Viewer";
 
 interface Props {
 	selectedRegistrable?: FieldDetails;
@@ -13,6 +14,7 @@ interface Props {
 	onValueChange(key: string, value: any): Promise<boolean>;
 	requestExport(): void;
 	onMediaEditRequest(mediaName: keyof PassMediaProps): void;
+	templateParameters: Array<TemplateParameterProps>;
 }
 
 export default function OptionsMenu(props: Props) {
@@ -33,6 +35,7 @@ export default function OptionsMenu(props: Props) {
 				fields={props.fields}
 				data={props.data}
 				requestExport={props.requestExport}
+				templateParameters={props.templateParameters}
 			/>
 		</div>
 	);

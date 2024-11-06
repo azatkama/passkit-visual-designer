@@ -7,6 +7,7 @@ import FieldPropertiesEditList from "./FieldPropertiesEditList";
 import { PageContainer } from "../../PageContainer";
 import { PageProps } from "../../navigation.utils";
 import { connect } from "react-redux";
+import { TemplateParameterProps } from "../../../Viewer";
 
 type PassField = Constants.PassField;
 
@@ -14,6 +15,7 @@ interface Props extends PageProps {
 	selectedField?: PassField[];
 	fieldUUID: string;
 	changePassPropValue?: typeof Store.Pass.setProp;
+	templateParameters: Array<TemplateParameterProps>;
 }
 
 class FieldsPropertiesEditPage extends React.Component<Props> {
@@ -42,8 +44,20 @@ class FieldsPropertiesEditPage extends React.Component<Props> {
 		this.updateValue({ ...this.props.selectedField[this.dataIndex], [prop]: value });
 	}
 
+	updatePassProps<T>(props: Object) {
+		this.updateValue({ ...this.props.selectedField[this.dataIndex], ...props });
+	}
+
 	updateKey(value: string) {
-		this.updatePassProp("key", value);
+		const parameter = this.props.templateParameters.find((parameter) => parameter.name === value);
+		const newProps = { key: value };
+
+		if (!!parameter) {
+			newProps['label'] = parameter.label;
+			newProps['value'] = parameter.name;
+		}
+
+		this.updatePassProps(newProps);
 	}
 
 	render() {
@@ -53,7 +67,12 @@ class FieldsPropertiesEditPage extends React.Component<Props> {
 			<PageContainer>
 				<div id="fields-properties-edit-page">
 					<PageHeader onBack={this.props.onBack} />
-					<FieldPreview keyEditable onFieldKeyChange={this.updateKey} previewData={current} />
+					<FieldPreview
+						keyEditable
+						onFieldKeyChange={this.updateKey}
+						previewData={current}
+						templateParameters={this.props.templateParameters}
+					/>
 					<FieldPropertiesEditList data={current} onValueChange={this.updatePassProp} />
 				</div>
 			</PageContainer>

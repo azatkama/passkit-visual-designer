@@ -1,13 +1,17 @@
 import * as React from "react";
-import { OptionProps } from "./CommittableCreatableSelect";
-import Select from "react-select";
+import Select from "react-select/creatable";
+
+export interface OptionProps {
+	value: number|string;
+	label: number|string;
+}
 
 interface Props extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> {
 	commit(value: string|number|readonly string[]): void;
 	options: Array<OptionProps>;
 }
 
-export default React.forwardRef(function CommittableSelect(
+export default React.forwardRef(function CommittableCreatableSelect(
 	props: Props,
 	ref: React.RefObject<HTMLInputElement>
 ) {
@@ -19,15 +23,21 @@ export default React.forwardRef(function CommittableSelect(
 		...inputProps
 	} = props;
 
+	const value = defaultValue ? (
+		options.find((option) => option.value === defaultValue)
+		|| { value: defaultValue, label: defaultValue }
+	) : null;
+
 	return (
 		<Select
 			ref={ref}
 			onChange={(newValue) => commit(newValue.value)}
-			value={options.find((option) => option.value === defaultValue)}
-			options={options}
+			value={value}
 			placeholder={placeholder}
+			options={options}
 			className="react-select-container"
 			classNamePrefix="react-select"
+			createOptionPosition="first"
 			{...inputProps}
 		/>
 	);

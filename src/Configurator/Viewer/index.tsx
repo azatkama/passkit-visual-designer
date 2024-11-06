@@ -7,9 +7,16 @@ import CommittableSelect from "../CommittableSelect";
 
 type PassField = Constants.PassField;
 
+export interface TemplateParameterProps {
+	id: number;
+	name: string;
+	label: string;
+}
+
 export interface TemplateProps {
 	id: number;
 	name: string;
+	templateParameters: Array<TemplateParameterProps>;
 }
 
 export interface ViewerProps extends Pick<PassProps, "showBack"> {
@@ -66,7 +73,7 @@ export default function Viewer(props: ViewerProps) {
 			<div className="project-templates">
 				<CommittableSelect
 					defaultValue={projectTemplateId}
-					placeholder="Template"
+					placeholder="Choose Template"
 					commit={changeProjectTemplateId}
 					options={props.templates.map(({ id, name }) => {
 						return { value: id, label: name };

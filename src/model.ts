@@ -13,7 +13,8 @@ export enum FieldKind {
 	COLOR = "color",
 	FIELDS = "fields",
 	SWITCH = "switch",
-	JSON = "json"
+	JSON = "json",
+	TEMPLATE_PARAMETER = "template_parameter",
 }
 
 export type StylingProps = Pick<React.HTMLAttributes<HTMLDivElement>, "className" | "style">

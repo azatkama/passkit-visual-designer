@@ -1,0 +1,47 @@
+.panel.text {
+	& > label {
+		cursor: pointer;
+		display: flex;
+		justify-content: space-between;
+
+		& .required::after {
+			content: "required";
+			color: #fff;
+			font-size: 10px;
+			background-color: #444;
+			border: 0.5px solid #696969b5;
+			padding: 5px 7px;
+			border-radius: 2px;
+			position: relative;
+			bottom: 2px;
+		}
+	}
+
+	& > input {
+		background-color: transparent;
+		width: 100%;
+		outline: none;
+		font-size: 14px;
+		padding: 7px;
+		box-sizing: border-box;
+		border: none;
+		border-bottom: 1px solid rgb(66, 66, 66);
+		transition: border-bottom 0.5s ease-in-out;
+		color: #cacaca;
+
+		&::placeholder {
+			font-style: italic;
+			font-size: 14px;
+			color: #989898;
+		}
+
+		&::selection {
+			background-color: #9a9a9a;
+			color: #fff;
+		}
+
+		&:focus {
+			border-bottom: 1px solid #cacaca;
+		}
+	}
+}

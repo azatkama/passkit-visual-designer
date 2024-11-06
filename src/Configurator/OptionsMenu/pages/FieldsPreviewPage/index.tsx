@@ -11,6 +11,7 @@ import { connect } from "react-redux";
 import * as Store from "@pkvd/store";
 import FieldsPropertiesEditPage from "../FieldsPropertiesEditPage";
 import { navigable, NavigableProps, PageProps } from "../../navigation.utils";
+import { TemplateParameterProps } from "../../../Viewer";
 
 type PassFields = Constants.PassFields;
 type PassField = Constants.PassField;
@@ -18,6 +19,7 @@ type PassField = Constants.PassField;
 interface Props extends PageProps, Partial<NavigableProps> {
 	value?: PassField[];
 	changePassPropValue?: typeof Store.Pass.setProp;
+	templateParameters: Array<TemplateParameterProps>;
 }
 
 interface State {
@@ -160,6 +162,7 @@ class FieldsPreviewPage extends React.Component<Props, State> {
 						fieldUUID={currentEditingFieldUUID}
 						name={this.props.name}
 						onBack={this.closeDetailsPage}
+						templateParameters={this.props.templateParameters}
 					/>
 				)) ||
 					null}

@@ -3,6 +3,7 @@ import { FieldKind } from "../../../../../model";
 import { DataGroup } from "..";
 
 export { default as TextPanel } from "./TextPanel";
+export { default as TemplateParameterPanel } from "./TemplateParameterPanel";
 export { default as ColorPanel } from "./ColorPanel";
 export { default as FieldsPanel } from "./FieldsPanel";
 export { default as ImagePanel } from "./ImagePanel";

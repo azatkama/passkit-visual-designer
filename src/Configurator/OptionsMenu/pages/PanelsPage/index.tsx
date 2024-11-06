@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ColorPanel, FieldDetails, FieldsPanel, ImagePanel, TextPanel } from "./Panel";
+import { ColorPanel, FieldDetails, FieldsPanel, ImagePanel, TextPanel, TemplateParameterPanel } from "./Panel";
 import type { PassMediaProps, PassMixedProps } from "@pkvd/pass";
 import TabsList from "./TabsList";
 import RegistrationIndex from "../../../RegistrationIndex";
@@ -9,6 +9,7 @@ import { ShareIcon } from "./icons";
 import { PageProps, usePageRelation } from "../../navigation.utils";
 import { FieldKind } from "../../../../model";
 import FieldsPreviewPage from "../FieldsPreviewPage";
+import { TemplateParameterProps } from "../../../Viewer";
 
 export enum DataGroup {
 	METADATA = "Metadata",
@@ -26,6 +27,7 @@ interface Props extends Partial<PageProps> {
 	onValueChange<T>(name: string, data: T): void;
 	onMediaEditRequest(mediaName: keyof PassMediaProps): void;
 	requestExport?(): void;
+	templateParameters: Array<TemplateParameterProps>;
 }
 
 export default function PanelsPage(props: Props) {
@@ -85,6 +87,20 @@ export default function PanelsPage(props: Props) {
 							value={props.data?.[name]}
 							onValueChange={props.onValueChange}
 							isSelected={isSelected}
+						/>
+					);
+				}
+
+				case FieldKind.TEMPLATE_PARAMETER: {
+					return (
+						<TemplateParameterPanel
+							key={name}
+							name={name}
+							data={otherData}
+							value={props.data?.[name]}
+							onValueChange={props.onValueChange}
+							isSelected={isSelected}
+							templateParameters={props.templateParameters}
 						/>
 					);
 				}
@@ -156,7 +172,13 @@ export default function PanelsPage(props: Props) {
 					<ShareIcon className="icon" width="25px" height="25px" />
 				</div>
 			</PageContainer>
-			{(pageStatus && <FieldsPreviewPage onBack={closePage} name={contexualProps.name} />) || null}
+			{(pageStatus && (
+				<FieldsPreviewPage
+					onBack={closePage}
+					name={contexualProps.name}
+					templateParameters={props.templateParameters}
+				/>
+			)) || null}
 		</>
 	);
 }

@@ -8,7 +8,7 @@ const StaticFields: Array<[DataGroup, FieldDetails[]]> = [
 		[
 			{
 				name: "description",
-				kind: FieldKind.TEXT,
+				kind: FieldKind.TEMPLATE_PARAMETER,
 				group: DataGroup.METADATA,
 				mockable: false,
 				tooltipText: "",
@@ -24,7 +24,7 @@ const StaticFields: Array<[DataGroup, FieldDetails[]]> = [
 		required: true
 	},*/ {
 				name: "organizationName",
-				kind: FieldKind.TEXT,
+				kind: FieldKind.TEMPLATE_PARAMETER,
 				group: DataGroup.METADATA,
 				required: true,
 			},
