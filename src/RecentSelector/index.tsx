@@ -8,21 +8,13 @@ import { StateLookalike } from "../App";
 import { PassKind } from "../model";
 import { CSSTransition } from "react-transition-group";
 
-// Defined by webpack
-declare const version: string;
-
-const ZIP_FILE_PATH_SPLIT_REGEX = /(?:(?<language>.+)\.lproj\/)?(?<realFileName>.+)?/;
-const ZIP_FILE_IGNORE_REGEX = /(^\.|manifest\.json|signature|personalization\.json)/;
-const ZIP_FILE_STRINGS_PV_SPLIT_REGEX = /(?<placeholder>.+)\s=\s(?<value>.+);/;
-const ZIP_FILE_STRINGS_PV_QUOTES_REPLACE_REGEX = /"/g;
-const ZIP_FILE_NAME_EXT_REGEX = /(?<fileName>.+)\.(?<ext>(png|jpg))/;
-
 interface Props {
 	recentProjects: Store.Forage.ForageStructure["projects"];
 	requestForageDataRequest(): Promise<void>;
 	initStore(projectID: string): Promise<void>;
 	pushHistory(path: string, init?: Function): void;
-	createProjectFromArchive(data: StateLookalike): void;
+	processUploadedFile(event: React.FormEvent<HTMLInputElement>): void;
+	isProcessingZipFile: boolean;
 	selectUrl: string;
 	creatorUrl: string;
 }
@@ -31,7 +23,6 @@ interface State {
 	previewsURLList: { [projectID: string]: string };
 	editMode: boolean;
 	refreshing: boolean;
-	isProcessingZipFile: boolean;
 	showError: boolean;
 }
 
@@ -48,13 +39,11 @@ export default class RecentSelector extends React.Component<Props, State> {
 			editMode: false,
 			refreshing: false,
 			showError: false,
-			isProcessingZipFile: false,
 		};
 
 		this.switchEditMode = this.switchEditMode.bind(this);
 		this.selectRecent = this.selectRecent.bind(this);
 		this.toggleRefreshing = this.toggleRefreshing.bind(this);
-		this.processUploadedFile = this.processUploadedFile.bind(this);
 		this.toggleErrorOverlay = this.toggleErrorOverlay.bind(this);
 	}
 
@@ -144,179 +133,6 @@ export default class RecentSelector extends React.Component<Props, State> {
 		this.props.pushHistory(this.props.creatorUrl, () => this.props.initStore(id));
 	}
 
-	async processUploadedFile(event: React.FormEvent<HTMLInputElement>) {
-		const { currentTarget } = event;
-		const { files: uploadFiles } = currentTarget;
-
-		this.setState({
-			showError: false,
-			isProcessingZipFile: true,
-		});
-
-		try {
-			const parsedPayload: StateLookalike = {
-				pass: null,
-				translations: {},
-				media: {},
-				projectOptions: {
-					title: "Imported Project",
-				},
-			};
-
-			const firstZipFile = Array.prototype.find.call(uploadFiles, (file: File) =>
-				/.+\.(zip|pkpass)/.test(file.name)
-			);
-
-			if (!firstZipFile) {
-				const ext = uploadFiles[0].name.match(/\.(.+)/g)[0];
-				throw new Error(
-					`Unsupported file type (${ext}). Only .zip and .pkpass can be used as starting point.`
-				);
-			}
-
-			let zip: JSZip = null;
-
-			try {
-				zip = await JSZip.loadAsync(firstZipFile, { createFolders: false });
-			} catch (err) {
-				throw new Error(`Zip loading error (${err}).`);
-			} finally {
-				currentTarget.value = ""; /** Resetting input */
-			}
-
-			const filesNames = Object.entries(zip.files);
-
-			for (let i = filesNames.length, file: typeof filesNames[0]; (file = filesNames[--i]); ) {
-				const [filePath, fileObject] = file;
-
-				const match = filePath.match(ZIP_FILE_PATH_SPLIT_REGEX);
-				const { language, realFileName } = match.groups as {
-					language?: string;
-					realFileName?: string;
-				};
-
-				const isIgnoredFile = ZIP_FILE_IGNORE_REGEX.test(realFileName);
-				const isDirectoryRecord = language && !realFileName;
-				const isFileInDirectory = language && realFileName;
-
-				const shouldSkip =
-					/** Ignoring record, it is only the folder, we don't need it */
-					isDirectoryRecord ||
-					/** Is dynamic or unsupported file */
-					isIgnoredFile;
-
-				if (shouldSkip) {
-					continue;
-				}
-
-				if (realFileName === "pass.json") {
-					try {
-						let passInfo;
-
-						try {
-							passInfo = JSON.parse(await fileObject.async("string"));
-						} catch (err) {
-							throw `Bad JSON. (${err})`;
-						}
-
-						const {
-							boardingPass,
-							coupon,
-							storeCard,
-							eventTicket,
-							generic,
-							...otherPassProps
-						} = passInfo;
-						const { transitType } = boardingPass || {};
-
-						let kind: PassKind = null;
-						let sourceOfFields = null;
-
-						if (boardingPass) {
-							kind = PassKind.BOARDING_PASS;
-							const { transitType, ...boarding } = boardingPass;
-							sourceOfFields = boarding;
-						} else if (coupon) {
-							kind = PassKind.COUPON;
-							sourceOfFields = coupon;
-						} else if (storeCard) {
-							kind = PassKind.STORE;
-							sourceOfFields = storeCard;
-						} else if (eventTicket) {
-							kind = PassKind.EVENT;
-							sourceOfFields = eventTicket;
-						} else if (generic) {
-							kind = PassKind.GENERIC;
-							sourceOfFields = generic;
-						} else {
-							throw "Missing kind (boardingPass, coupon, storeCard, eventTicket, generic) to start from.";
-						}
-
-						parsedPayload.pass = Object.assign(otherPassProps, {
-							kind,
-							transitType,
-							...(sourceOfFields || null),
-						});
-
-						continue;
-					} catch (err) {
-						throw new Error(`Cannot parse pass.json: ${err}`);
-					}
-				}
-
-				if (isFileInDirectory) {
-					if (realFileName === "pass.strings") {
-						/**
-						 * Replacing BOM (Byte order mark).
-						 * This could affect matching between
-						 * fields and placeholders.
-						 */
-
-						const file = (await fileObject.async("string")).replace(/\uFEFF/g, "");
-
-						file
-							.split("\n")
-							.map((row) => row.match(ZIP_FILE_STRINGS_PV_SPLIT_REGEX))
-							.forEach((match) => {
-								if (!match?.groups) {
-									return;
-								}
-
-								(parsedPayload.translations[language] ??= []).push([
-									match.groups.placeholder.replace(ZIP_FILE_STRINGS_PV_QUOTES_REPLACE_REGEX, ""),
-									match.groups.value.replace(ZIP_FILE_STRINGS_PV_QUOTES_REPLACE_REGEX, ""),
-								]);
-							});
-					} else if (ZIP_FILE_NAME_EXT_REGEX.test(realFileName)) {
-						const file = await fileObject.async("arraybuffer");
-
-						(parsedPayload.media[language] ??= []).push([realFileName, file]);
-					}
-				} else {
-					const file = await fileObject.async("arraybuffer");
-
-					(parsedPayload.media["default"] ??= []).push([realFileName, file]);
-				}
-			}
-
-			if (!parsedPayload.pass) {
-				throw new Error("Missing pass.json");
-			}
-
-			this.setState({
-				isProcessingZipFile: false,
-			});
-
-			return this.props.createProjectFromArchive(parsedPayload);
-		} catch (err) {
-			this.toggleErrorOverlay(`Unable to complete import. ${err.message}`);
-
-			this.setState({
-				isProcessingZipFile: false,
-			});
-		}
-	}
-
 	/**
 	 * Shows or hides error message. We want to
 	 * show it before opening animation and remove
@@ -378,10 +194,10 @@ export default class RecentSelector extends React.Component<Props, State> {
 					</CSSTransition>
 					<div className="centered-column">
 						<section>
-							<div id="choices-box" className={this.state.isProcessingZipFile ? "loading" : ""}>
+							<div id="choices-box" className={this.props.isProcessingZipFile ? "loading" : ""}>
 								<div
 									onClick={() =>
-										!this.state.isProcessingZipFile && this.props.pushHistory(this.props.selectUrl)
+										!this.props.isProcessingZipFile && this.props.pushHistory(this.props.selectUrl)
 									}
 								>
 									<AddIcon width="32px" height="32px" />
@@ -395,8 +211,8 @@ export default class RecentSelector extends React.Component<Props, State> {
 										type="file"
 										accept=".zip,.pkpass"
 										id="zip-upload"
-										disabled={this.state.isProcessingZipFile}
-										onChange={this.processUploadedFile}
+										disabled={this.props.isProcessingZipFile}
+										onChange={this.props.processUploadedFile}
 									/>
 									<sub>Supported types: .zip, .pkpass</sub>
 								</label>

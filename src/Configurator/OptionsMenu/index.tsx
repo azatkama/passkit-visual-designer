@@ -15,6 +15,7 @@ interface Props {
 	requestExport(): void;
 	onMediaEditRequest(mediaName: keyof PassMediaProps): void;
 	templateParameters: Array<TemplateParameterProps>;
+	exportTitle?: string;
 }
 
 export default function OptionsMenu(props: Props) {
@@ -36,6 +37,7 @@ export default function OptionsMenu(props: Props) {
 				data={props.data}
 				requestExport={props.requestExport}
 				templateParameters={props.templateParameters}
+				exportTitle={props.exportTitle}
 			/>
 		</div>
 	);

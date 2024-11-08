@@ -53,15 +53,15 @@ export default function ExportModal(props: Props) {
 		);
 	});
 
-	const { templateName, lang } = partners[activePartnerTab];
-	const partnerFilledContent = templates[templateName]({
+	const { templateName, lang } = partners[activePartnerTab] || {};
+	const partnerFilledContent = templateName ? templates[templateName]({
 		store: {
 			pass: props.passProps,
 			translations: props.translations,
 			projectOptions: props.projectOptions,
 			media: props.media,
 		},
-	});
+	}) : null;
 
 	const codeLanguage = `language-${lang}`;
 
@@ -80,7 +80,7 @@ export default function ExportModal(props: Props) {
 					<code
 						ref={codeRef}
 						dangerouslySetInnerHTML={{
-							__html: Prism.highlight(partnerFilledContent, Prism.languages[lang], lang),
+							__html: partnerFilledContent ? Prism.highlight(partnerFilledContent, Prism.languages[lang], lang) : null,
 						}}
 					/>
 				</pre>

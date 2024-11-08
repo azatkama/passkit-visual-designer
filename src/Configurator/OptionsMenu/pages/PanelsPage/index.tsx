@@ -28,6 +28,7 @@ interface Props extends Partial<PageProps> {
 	onMediaEditRequest(mediaName: keyof PassMediaProps): void;
 	requestExport?(): void;
 	templateParameters: Array<TemplateParameterProps>;
+	exportTitle?: string;
 }
 
 export default function PanelsPage(props: Props) {
@@ -168,7 +169,7 @@ export default function PanelsPage(props: Props) {
 					</div>
 				</div>
 				<div className={exportButtonClassName} onClick={() => props.requestExport?.()}>
-					<h3>Export</h3>
+					<h3>{props.exportTitle || 'Export'}</h3>
 					<ShareIcon className="icon" width="25px" height="25px" />
 				</div>
 			</PageContainer>

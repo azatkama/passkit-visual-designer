@@ -15,12 +15,23 @@ import PassSelector from "../PassSelector";
 import { createStore, applyMiddleware } from "redux";
 import Configurator from "../Configurator";
 import * as Store from "@pkvd/store";
-import RecentSelector from "../RecentSelector";
 import LoaderFace from "../Loader";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
 import { PassMediaProps, PassMixedProps } from "@pkvd/pass";
 import { v1 as uuid } from "uuid";
 import { TemplateProps } from "../Configurator/Viewer";
+import JSZip from "jszip";
+import { PassKind } from "../model";
+import { useState } from "react";
+
+// Defined by webpack
+declare const version: string;
+
+const ZIP_FILE_PATH_SPLIT_REGEX = /(?:(?<language>.+)\.lproj\/)?(?<realFileName>.+)?/;
+const ZIP_FILE_IGNORE_REGEX = /(^\.|manifest\.json|signature|personalization\.json)/;
+const ZIP_FILE_STRINGS_PV_SPLIT_REGEX = /(?<placeholder>.+)\s=\s(?<value>.+);/;
+const ZIP_FILE_STRINGS_PV_QUOTES_REPLACE_REGEX = /"/g;
+const ZIP_FILE_NAME_EXT_REGEX = /(?<fileName>.+)\.(?<ext>(png|jpg))/;
 
 export interface StateLookalike {
 	pass: Partial<PassMixedProps>;
@@ -68,7 +79,14 @@ const store = createStore(
  * in App component below
  */
 
-export default function AppRoutingLoaderContainer({ url = '/', templates = [], ...rest }) {
+export default function AppRoutingLoaderContainer({
+	url = '/',
+	templates = [],
+	file = null,
+	onExport,
+	exportTitle = null,
+	...rest
+}) {
 	const [isLoading, setLoading] = React.useState(true);
 
 	return (
@@ -80,7 +98,10 @@ export default function AppRoutingLoaderContainer({ url = '/', templates = [], .
 				<App
 					setLoading={setLoading}
 					url={url}
+					file={file}
 					templates={templates}
+					onExport={onExport}
+					exportTitle={exportTitle}
 					{...rest}
 				/>
 			</Router>
@@ -92,15 +113,17 @@ interface Props {
 	setLoading(state: React.SetStateAction<boolean>): void;
 	url: string;
 	templates: Array<TemplateProps>;
+	file?: File;
+	onExport(data: Object): void;
+	exportTitle?: string;
 }
 
 function App(props: Props): JSX.Element {
 	const [forageData, setForageData] = React.useState<Store.Forage.ForageStructure>();
-
+	const [isProcessingZipFile, setProcessingZipFile] = useState(false);
 	const history = useHistory();
 	const location = useLocation();
 	const url = props.url;
-	const selectUrl = `${url}/select`;
 	const creatorUrl = `${url}/creator`;
 
 	const wrapLoading = React.useCallback(
@@ -308,6 +331,172 @@ function App(props: Props): JSX.Element {
 		[initializeStore, history]
 	);
 
+	const processUploadedFile = async (event: React.FormEvent<HTMLInputElement>) => {
+		const { currentTarget } = event;
+		const { files: uploadFiles } = currentTarget;
+
+		setProcessingZipFile(true);
+
+		try {
+			const parsedPayload: StateLookalike = {
+				pass: null,
+				translations: {},
+				media: {},
+				projectOptions: {
+					title: "Imported Project",
+				},
+			};
+
+			const firstZipFile = Array.prototype.find.call(uploadFiles, (file: File) =>
+				/.+\.(zip|pkpass)/.test(file.name)
+			);
+
+			if (!firstZipFile) {
+				const ext = uploadFiles[0].name.match(/\.(.+)/g)[0];
+				throw new Error(
+					`Unsupported file type (${ext}). Only .zip and .pkpass can be used as starting point.`
+				);
+			}
+
+			let zip: JSZip = null;
+
+			try {
+				zip = await JSZip.loadAsync(firstZipFile, { createFolders: false });
+			} catch (err) {
+				throw new Error(`Zip loading error (${err}).`);
+			} finally {
+				currentTarget.value = ""; /** Resetting input */
+			}
+
+			const filesNames = Object.entries(zip.files);
+
+			for (let i = filesNames.length, file: typeof filesNames[0]; (file = filesNames[--i]); ) {
+				const [filePath, fileObject] = file;
+
+				const match = filePath.match(ZIP_FILE_PATH_SPLIT_REGEX);
+				const { language, realFileName } = match.groups as {
+					language?: string;
+					realFileName?: string;
+				};
+
+				const isIgnoredFile = ZIP_FILE_IGNORE_REGEX.test(realFileName);
+				const isDirectoryRecord = language && !realFileName;
+				const isFileInDirectory = language && realFileName;
+
+				const shouldSkip =
+					/** Ignoring record, it is only the folder, we don't need it */
+					isDirectoryRecord ||
+					/** Is dynamic or unsupported file */
+					isIgnoredFile;
+
+				if (shouldSkip) {
+					continue;
+				}
+
+				if (realFileName === "pass.json") {
+					try {
+						let passInfo;
+
+						try {
+							passInfo = JSON.parse(await fileObject.async("string"));
+						} catch (err) {
+							throw `Bad JSON. (${err})`;
+						}
+
+						const {
+							boardingPass,
+							coupon,
+							storeCard,
+							eventTicket,
+							generic,
+							...otherPassProps
+						} = passInfo;
+						const { transitType } = boardingPass || {};
+
+						let kind: PassKind = null;
+						let sourceOfFields = null;
+
+						if (boardingPass) {
+							kind = PassKind.BOARDING_PASS;
+							const { transitType, ...boarding } = boardingPass;
+							sourceOfFields = boarding;
+						} else if (coupon) {
+							kind = PassKind.COUPON;
+							sourceOfFields = coupon;
+						} else if (storeCard) {
+							kind = PassKind.STORE;
+							sourceOfFields = storeCard;
+						} else if (eventTicket) {
+							kind = PassKind.EVENT;
+							sourceOfFields = eventTicket;
+						} else if (generic) {
+							kind = PassKind.GENERIC;
+							sourceOfFields = generic;
+						} else {
+							throw "Missing kind (boardingPass, coupon, storeCard, eventTicket, generic) to start from.";
+						}
+
+						parsedPayload.pass = Object.assign(otherPassProps, {
+							kind,
+							transitType,
+							...(sourceOfFields || null),
+						});
+
+						continue;
+					} catch (err) {
+						throw new Error(`Cannot parse pass.json: ${err}`);
+					}
+				}
+
+				if (isFileInDirectory) {
+					if (realFileName === "pass.strings") {
+						/**
+						 * Replacing BOM (Byte order mark).
+						 * This could affect matching between
+						 * fields and placeholders.
+						 */
+
+						const file = (await fileObject.async("string")).replace(/\uFEFF/g, "");
+
+						file
+							.split("\n")
+							.map((row) => row.match(ZIP_FILE_STRINGS_PV_SPLIT_REGEX))
+							.forEach((match) => {
+								if (!match?.groups) {
+									return;
+								}
+
+								(parsedPayload.translations[language] ??= []).push([
+									match.groups.placeholder.replace(ZIP_FILE_STRINGS_PV_QUOTES_REPLACE_REGEX, ""),
+									match.groups.value.replace(ZIP_FILE_STRINGS_PV_QUOTES_REPLACE_REGEX, ""),
+								]);
+							});
+					} else if (ZIP_FILE_NAME_EXT_REGEX.test(realFileName)) {
+						const file = await fileObject.async("arraybuffer");
+
+						(parsedPayload.media[language] ??= []).push([realFileName, file]);
+					}
+				} else {
+					const file = await fileObject.async("arraybuffer");
+
+					(parsedPayload.media["default"] ??= []).push([realFileName, file]);
+				}
+			}
+
+			if (!parsedPayload.pass) {
+				throw new Error("Missing pass.json");
+			}
+
+			setProcessingZipFile(false);
+
+			return createProjectFromArchive(parsedPayload);
+		} catch (err) {
+			this.toggleErrorOverlay(`Unable to complete import. ${err.message}`);
+
+			setProcessingZipFile(false);
+		}
+	}
+
 	React.useEffect(() => {
 		/**
 		 * Removing previously created records.
@@ -318,13 +507,17 @@ function App(props: Props): JSX.Element {
 
 		sessionStorage.clear();
 		wrapLoading(refreshForageCallback, null, LOADING_TIME_MS);
+
+		if (props.file) {
+			processUploadedFile({ currentTarget: { files: [props.file] } });
+		}
 	}, []);
 
 	React.useEffect(() => {
 		const unlisten = history.listen(async (nextLocation, action) => {
 			if (action === "POP") {
-				if (location.pathname === creatorUrl && nextLocation.pathname === selectUrl) {
-					history.replace(props.url);
+				if (location.pathname === creatorUrl && nextLocation.pathname === url) {
+					history.replace(url);
 				}
 
 				wrapLoading(
@@ -363,38 +556,19 @@ function App(props: Props): JSX.Element {
 			>
 				<Switch location={location}>
 					<Route path={url} exact>
-						<RecentSelector
-							recentProjects={forageData?.projects ?? {}}
-							requestForageDataRequest={refreshForageCallback}
-							initStore={initializeStoreByProjectID}
+						<PassSelector
 							pushHistory={changePathWithLoading}
-							createProjectFromArchive={createProjectFromArchive}
-							selectUrl={selectUrl}
 							creatorUrl={creatorUrl}
 						/>
 					</Route>
-					<Route path={selectUrl}>
-						{() => {
-							/**
-							 * This condition is for startup. The navigation from
-							 * /creation will be handled by history.listen above
-							 */
-							return !__DEV__ && history.action === "POP" ? (
-								<Redirect to={url} />
-							) : (
-								<PassSelector
-									pushHistory={changePathWithLoading}
-									creatorUrl={creatorUrl}
-								/>
-							);
-						}}
-					</Route>
-					<Route path={creatorUrl}>
+					<Route path={creatorUrl} exact>
 						{/** Let's play monopoly. You landed to /creator. Go to home without passing Go! */}
 						{() =>
 							!(__DEV__ || store.getState()?.pass?.kind) ? <Redirect to={url} /> : (
 								<Configurator
 									templates={props.templates}
+									onExport={props.onExport}
+									exportTitle={props.exportTitle}
 								/>
 							)
 						}

@@ -59,6 +59,9 @@ interface ConfiguratorStore {
 
 interface ConfiguratorProps extends ConfiguratorStore, DispatchProps, RouteComponentProps<any> {
 	templates: Array<TemplateProps>;
+	onExport(data: Object): void;
+	exportTitle?: string;
+	showExportModal?: boolean;
 }
 
 interface ConfiguratorState {
@@ -320,11 +323,23 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 		// @TODO: check requirements for exporting
 		// so all the basic fields and so on.
 
-		this.toggleModal(ModalIdentifier.Export);
+		if (this.props.showExportModal) {
+			this.toggleModal(ModalIdentifier.Export);
+		}
 
 		const { projectOptions, passProps, media, translations } = this.props;
 
 		const buffer = await exportPass(passProps, media, translations);
+
+		if (this.props.onExport) {
+			this.props.onExport({
+				...projectOptions,
+				passFile: buffer,
+			});
+
+			return;
+		}
+
 		const fileURL = URL.createObjectURL(buffer);
 
 		Object.assign(document.createElement("a"), {
@@ -383,6 +398,7 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 						onValueChange={this.onValueChange}
 						cancelFieldSelection={this.onVoidClick}
 						requestExport={(canBeExported && this.requestExport) || null}
+						exportTitle={this.props.exportTitle}
 						onMediaEditRequest={this.toggleMediaModal}
 						templateParameters={template?.templateParameters || []}
 					/>
