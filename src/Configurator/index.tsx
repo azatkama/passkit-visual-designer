@@ -4,7 +4,7 @@ import { RouteComponentProps, withRouter } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
 import { connect } from "react-redux";
 import { v1 as uuid } from "uuid";
-import Viewer, { TemplateProps } from "./Viewer";
+import Viewer, { ExportErrors, TemplateProps } from "./Viewer";
 import OptionsBar from "./OptionsBar";
 import OptionsMenu from "./OptionsMenu";
 import { FieldKind } from "../model";
@@ -60,8 +60,11 @@ interface ConfiguratorStore {
 interface ConfiguratorProps extends ConfiguratorStore, DispatchProps, RouteComponentProps<any> {
 	templates: Array<TemplateProps>;
 	onExport(data: Object): void;
+	onValidateFields(data: Object): void;
 	exportTitle?: string;
 	showExportModal?: boolean;
+	exportButtonRef?: React.RefObject<HTMLButtonElement>;
+	exportErrors: ExportErrors;
 }
 
 interface ConfiguratorState {
@@ -127,13 +130,24 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 		if (!this.props.projectOptions.id) {
 			this.props.setProjectOption("id", uuid());
 		}
+
+		if (this.props.exportButtonRef?.current) {
+			this.props.exportButtonRef?.current.addEventListener('click', this.requestExport);
+		}
+	}
+
+	componentWillUnmount() {
+		if (this.props.exportButtonRef?.current) {
+			this.props.exportButtonRef?.current.removeEventListener('click', this.requestExport);
+		}
 	}
 
 	static getDerivedStateFromProps(props: ConfiguratorProps) {
+		const { projectOptions: { title, templateId } } = props;
 		const { description, organizationName, passTypeIdentifier, teamIdentifier } =
 			props?.passProps ?? {};
 
-		if (!(description && organizationName && passTypeIdentifier && teamIdentifier)) {
+		if (!(description && organizationName && passTypeIdentifier && teamIdentifier && title && templateId)) {
 			return {
 				canBeExported: false,
 			};
@@ -328,6 +342,21 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 		}
 
 		const { projectOptions, passProps, media, translations } = this.props;
+		const { title, templateId } = projectOptions;
+		const { description, organizationName, passTypeIdentifier, teamIdentifier } = passProps ?? {};
+
+		if (!(description && organizationName && passTypeIdentifier && teamIdentifier && title && templateId) && !!this.props.onValidateFields) {
+			this.props.onValidateFields({
+				description: !description,
+				organizationName: !organizationName,
+				passTypeIdentifier: !passTypeIdentifier,
+				teamIdentifier: !teamIdentifier,
+				title: !title,
+				templateId: !templateId,
+			});
+
+			return;
+		}
 
 		const buffer = await exportPass(passProps, media, translations);
 
@@ -381,6 +410,7 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 							changeProjectTitle={this.changeProjectTitle}
 							changeProjectTemplateId={this.changeProjectTemplateId}
 							templates={this.props.templates}
+							exportErrors={this.props.exportErrors}
 						/>
 					</InteractionContext.Provider>
 					<OptionsBar
@@ -397,7 +427,7 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 						fields={this.registeredFields}
 						onValueChange={this.onValueChange}
 						cancelFieldSelection={this.onVoidClick}
-						requestExport={(canBeExported && this.requestExport) || null}
+						requestExport={(canBeExported && !this.props.exportButtonRef?.current && this.requestExport) || null}
 						exportTitle={this.props.exportTitle}
 						onMediaEditRequest={this.toggleMediaModal}
 						templateParameters={template?.templateParameters || []}

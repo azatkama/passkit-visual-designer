@@ -168,10 +168,12 @@ export default function PanelsPage(props: Props) {
 						{panels}
 					</div>
 				</div>
-				<div className={exportButtonClassName} onClick={() => props.requestExport?.()}>
-					<h3>{props.exportTitle || 'Export'}</h3>
-					<ShareIcon className="icon" width="25px" height="25px" />
-				</div>
+				{!!props.requestExport && (
+					<div className={exportButtonClassName} onClick={() => props.requestExport?.()}>
+						<h3>{props.exportTitle || "Export"}</h3>
+						<ShareIcon className="icon" width="25px" height="25px" />
+					</div>
+				)}
 			</PageContainer>
 			{(pageStatus && (
 				<FieldsPreviewPage

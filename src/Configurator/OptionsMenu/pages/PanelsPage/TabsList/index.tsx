@@ -28,14 +28,14 @@ export default function TabsList(props: Props) {
 		 */
 
 		setTimeout(() => {
-			if (shadowsRef.current.offsetWidth === Math.round(shadowsRef.current.scrollWidth / 10) * 10) {
+			if (shadowsRef?.current?.offsetWidth === Math.round(shadowsRef?.current?.scrollWidth / 10) * 10) {
 				setShadowMode(undefined);
 			}
 		}, 2000);
 	}, []);
 
 	React.useLayoutEffect(() => {
-		if (!shadowsRef.current) {
+		if (!shadowsRef?.current) {
 			return;
 		}
 
@@ -95,7 +95,7 @@ export default function TabsList(props: Props) {
 			computeShadowMode(
 				childNodes[props.selectedIndex] as HTMLLIElement,
 				undefined,
-				shadowsRef.current.scrollLeft
+				shadowsRef?.current?.scrollLeft
 			)
 		);
 	}, []);

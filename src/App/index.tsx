@@ -19,7 +19,7 @@ import LoaderFace from "../Loader";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
 import { PassMediaProps, PassMixedProps } from "@pkvd/pass";
 import { v1 as uuid } from "uuid";
-import { TemplateProps } from "../Configurator/Viewer";
+import { ExportErrors, TemplateProps } from "../Configurator/Viewer";
 import JSZip from "jszip";
 import { PassKind } from "../model";
 import { useState } from "react";
@@ -84,7 +84,9 @@ export default function AppRoutingLoaderContainer({
 	templates = [],
 	file = null,
 	onExport,
+  onValidateFields,
 	exportTitle = null,
+  exportButtonRef = null,
 	...rest
 }) {
 	const [isLoading, setLoading] = React.useState(true);
@@ -101,7 +103,9 @@ export default function AppRoutingLoaderContainer({
 					file={file}
 					templates={templates}
 					onExport={onExport}
+					onValidateFields={onValidateFields}
 					exportTitle={exportTitle}
+					exportButtonRef={exportButtonRef}
 					{...rest}
 				/>
 			</Router>
@@ -115,7 +119,9 @@ interface Props {
 	templates: Array<TemplateProps>;
 	file?: File;
 	onExport(data: Object): void;
+	onValidateFields(data: Object): void;
 	exportTitle?: string;
+	exportButtonRef?: React.RefObject<HTMLButtonElement>;
 }
 
 function App(props: Props): JSX.Element {
@@ -123,6 +129,14 @@ function App(props: Props): JSX.Element {
 	const [isProcessingZipFile, setProcessingZipFile] = useState(false);
 	const history = useHistory();
 	const location = useLocation();
+	const [exportErrors, setExportErrors] = useState<ExportErrors>({
+		description: false,
+		organizationName: false,
+		passTypeIdentifier: false,
+		teamIdentifier: false,
+		title: false,
+		templateId: false,
+	});
 	const url = props.url;
 	const creatorUrl = `${url}/creator`;
 
@@ -142,6 +156,21 @@ function App(props: Props): JSX.Element {
 			props.setLoading(false);
 		},
 		[]
+	);
+
+	const onValidateFields = React.useCallback(
+		async (errors: Object) => {
+			setExportErrors((exportErrors) => {
+				const newExportErrors = { ...exportErrors, ...errors };
+
+				if (!!props.onValidateFields) {
+					props.onValidateFields(newExportErrors);
+				}
+
+				return newExportErrors;
+			});
+		},
+		[props.onValidateFields]
 	);
 
 	const changePathWithLoading = React.useCallback((path: string, preloadCallback?: Function) => {
@@ -568,7 +597,10 @@ function App(props: Props): JSX.Element {
 								<Configurator
 									templates={props.templates}
 									onExport={props.onExport}
+									onValidateFields={onValidateFields}
 									exportTitle={props.exportTitle}
+									exportButtonRef={props.exportButtonRef}
+									exportErrors={exportErrors}
 								/>
 							)
 						}

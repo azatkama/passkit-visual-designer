@@ -7,6 +7,15 @@ import CommittableSelect from "../CommittableSelect";
 
 type PassField = Constants.PassField;
 
+export interface ExportErrors {
+	description: boolean;
+	organizationName: boolean;
+	passTypeIdentifier: boolean;
+	teamIdentifier: boolean;
+	title: boolean;
+	templateId: boolean;
+}
+
 export interface TemplateParameterProps {
 	id: number;
 	name: string;
@@ -29,6 +38,7 @@ export interface ViewerProps extends Pick<PassProps, "showBack"> {
 	changeProjectTitle(title: string): void;
 	changeProjectTemplateId(id: string|number|readonly string[]): void;
 	templates: Array<TemplateProps>;
+	exportErrors: ExportErrors;
 }
 
 export default function Viewer(props: ViewerProps) {
@@ -39,7 +49,8 @@ export default function Viewer(props: ViewerProps) {
 		projectTitle = "",
 		projectTemplateId = null,
 		showBack,
-		passProps
+		passProps,
+		exportErrors
 	} = props;
 
 	const viewerCN = createClassName(["viewer"], {
@@ -69,6 +80,7 @@ export default function Viewer(props: ViewerProps) {
 					placeholder="Untitled Project"
 					commit={changeProjectTitle}
 				/>
+				{exportErrors.title && (<div className="field-error">Field is required</div>)}
 			</div>
 			<div className="project-templates">
 				<CommittableSelect
@@ -79,6 +91,7 @@ export default function Viewer(props: ViewerProps) {
 						return { value: id, label: name };
 					})}
 				/>
+				{exportErrors.templateId && (<div className="field-error">Field is required</div>)}
 			</div>
 			<Pass {...passUIProps} showBack={showBack} />
 		</div>
