@@ -562,6 +562,7 @@ function App(props: Props): JSX.Element {
 				{ title: props.project?.title, template: props.project?.template }
 			);
 		} else {
+			initializeStore({ ...Store.initialState });
 			wrapLoading(refreshForageCallback, null, LOADING_TIME_MS);
 		}
 
