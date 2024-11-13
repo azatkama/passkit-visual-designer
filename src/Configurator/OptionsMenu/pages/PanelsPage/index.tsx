@@ -9,7 +9,7 @@ import { ShareIcon } from "./icons";
 import { PageProps, usePageRelation } from "../../navigation.utils";
 import { FieldKind } from "../../../../model";
 import FieldsPreviewPage from "../FieldsPreviewPage";
-import { TemplateParameterProps } from "../../../Viewer";
+import { ExportErrors, TemplateParameterProps } from "../../../Viewer";
 
 export enum DataGroup {
 	METADATA = "Metadata",
@@ -29,6 +29,8 @@ interface Props extends Partial<PageProps> {
 	requestExport?(): void;
 	templateParameters: Array<TemplateParameterProps>;
 	exportTitle?: string;
+	exportErrors: ExportErrors;
+	hiddenFields: Array<string>;
 }
 
 export default function PanelsPage(props: Props) {
@@ -75,6 +77,7 @@ export default function PanelsPage(props: Props) {
 
 	const panels = props.fields
 		.getDatagroup(MenuVoices[selectedTabIndex])
+		.filter(({ name }) => !props.hiddenFields.includes(name))
 		.map(({ kind, name, ...otherData }) => {
 			const isSelected = props.selectedRegistrable?.name === name;
 
@@ -99,6 +102,7 @@ export default function PanelsPage(props: Props) {
 							name={name}
 							data={otherData}
 							value={props.data?.[name]}
+							error={props.exportErrors[name] || false}
 							onValueChange={props.onValueChange}
 							isSelected={isSelected}
 							templateParameters={props.templateParameters}

@@ -13,7 +13,7 @@ export interface ExportErrors {
 	passTypeIdentifier: boolean;
 	teamIdentifier: boolean;
 	title: boolean;
-	templateId: boolean;
+	template: boolean;
 }
 
 export interface TemplateParameterProps {
@@ -34,7 +34,7 @@ export interface ViewerProps extends Pick<PassProps, "showBack"> {
 	showEmpty: boolean;
 	onVoidClick(e: React.MouseEvent): void;
 	projectTitle?: string;
-	projectTemplateId?: number;
+	projectTemplate?: number;
 	changeProjectTitle(title: string): void;
 	changeProjectTemplateId(id: string|number|readonly string[]): void;
 	templates: Array<TemplateProps>;
@@ -47,7 +47,7 @@ export default function Viewer(props: ViewerProps) {
 		changeProjectTemplateId,
 		onVoidClick,
 		projectTitle = "",
-		projectTemplateId = null,
+		projectTemplate = null,
 		showBack,
 		passProps,
 		exportErrors
@@ -84,14 +84,14 @@ export default function Viewer(props: ViewerProps) {
 			</div>
 			<div className="project-templates">
 				<CommittableSelect
-					defaultValue={projectTemplateId}
+					defaultValue={projectTemplate}
 					placeholder="Choose Template"
 					commit={changeProjectTemplateId}
 					options={props.templates.map(({ id, name }) => {
 						return { value: id, label: name };
 					})}
 				/>
-				{exportErrors.templateId && (<div className="field-error">Field is required</div>)}
+				{exportErrors.template && (<div className="field-error">Field is required</div>)}
 			</div>
 			<Pass {...passUIProps} showBack={showBack} />
 		</div>

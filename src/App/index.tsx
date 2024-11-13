@@ -41,9 +41,12 @@ export interface StateLookalike {
 	media: {
 		[language: string]: [fileName: string, buffer: ArrayBuffer][];
 	};
-	projectOptions: {
-		title: string;
-	};
+	projectOptions: ProjectOptions;
+}
+
+interface ProjectOptions {
+	title: string;
+	template: number;
 }
 
 // Webpack valorized
@@ -82,11 +85,12 @@ const store = createStore(
 export default function AppRoutingLoaderContainer({
 	url = '/',
 	templates = [],
-	file = null,
 	onExport,
   onValidateFields,
 	exportTitle = null,
   exportButtonRef = null,
+  project = null,
+	hiddenFields = [],
 	...rest
 }) {
 	const [isLoading, setLoading] = React.useState(true);
@@ -98,14 +102,16 @@ export default function AppRoutingLoaderContainer({
 					<LoaderFace />
 				</CSSTransition>
 				<App
+					isLoading={isLoading}
 					setLoading={setLoading}
 					url={url}
-					file={file}
+					project={project}
 					templates={templates}
 					onExport={onExport}
 					onValidateFields={onValidateFields}
 					exportTitle={exportTitle}
 					exportButtonRef={exportButtonRef}
+					hiddenFields={hiddenFields}
 					{...rest}
 				/>
 			</Router>
@@ -113,15 +119,23 @@ export default function AppRoutingLoaderContainer({
 	);
 }
 
+interface Project {
+	title?: string;
+	template?: number;
+	file?: File;
+}
+
 interface Props {
+	isLoading: boolean;
 	setLoading(state: React.SetStateAction<boolean>): void;
 	url: string;
 	templates: Array<TemplateProps>;
-	file?: File;
 	onExport(data: Object): void;
 	onValidateFields(data: Object): void;
 	exportTitle?: string;
 	exportButtonRef?: React.RefObject<HTMLButtonElement>;
+	hiddenFields: Array<string>;
+	project?: Project;
 }
 
 function App(props: Props): JSX.Element {
@@ -135,7 +149,7 @@ function App(props: Props): JSX.Element {
 		passTypeIdentifier: false,
 		teamIdentifier: false,
 		title: false,
-		templateId: false,
+		template: false,
 	});
 	const url = props.url;
 	const creatorUrl = `${url}/creator`;
@@ -345,6 +359,7 @@ function App(props: Props): JSX.Element {
 						translations,
 						projectOptions: {
 							title: data.projectOptions.title,
+							template: data.projectOptions.template,
 							activeMediaLanguage: "default",
 						},
 						media,
@@ -360,10 +375,11 @@ function App(props: Props): JSX.Element {
 		[initializeStore, history]
 	);
 
-	const processUploadedFile = async (event: React.FormEvent<HTMLInputElement>) => {
+	const processUploadedFile = async (event: React.FormEvent<HTMLInputElement>, projectOptions: ProjectOptions) => {
 		const { currentTarget } = event;
 		const { files: uploadFiles } = currentTarget;
 
+		props.setLoading(true);
 		setProcessingZipFile(true);
 
 		try {
@@ -372,7 +388,8 @@ function App(props: Props): JSX.Element {
 				translations: {},
 				media: {},
 				projectOptions: {
-					title: "Imported Project",
+					title: projectOptions.title || "Imported Project",
+					template: projectOptions.template || null
 				},
 			};
 
@@ -516,12 +533,14 @@ function App(props: Props): JSX.Element {
 				throw new Error("Missing pass.json");
 			}
 
+			props.setLoading(false);
 			setProcessingZipFile(false);
 
 			return createProjectFromArchive(parsedPayload);
 		} catch (err) {
 			this.toggleErrorOverlay(`Unable to complete import. ${err.message}`);
 
+			props.setLoading(false);
 			setProcessingZipFile(false);
 		}
 	}
@@ -535,11 +554,20 @@ function App(props: Props): JSX.Element {
 		 */
 
 		sessionStorage.clear();
-		wrapLoading(refreshForageCallback, null, LOADING_TIME_MS);
 
-		if (props.file) {
-			processUploadedFile({ currentTarget: { files: [props.file] } });
+		if (props.project?.file) {
+			props.setLoading(true);
+			processUploadedFile(
+				{ currentTarget: { files: [props.project.file] } },
+				{ title: props.project?.title, template: props.project?.template }
+			);
+		} else {
+			wrapLoading(refreshForageCallback, null, LOADING_TIME_MS);
 		}
+
+		return () => {
+			sessionStorage.clear();
+		};
 	}, []);
 
 	React.useEffect(() => {
@@ -585,10 +613,12 @@ function App(props: Props): JSX.Element {
 			>
 				<Switch location={location}>
 					<Route path={url} exact>
-						<PassSelector
-							pushHistory={changePathWithLoading}
-							creatorUrl={creatorUrl}
-						/>
+						{!props.isLoading && (
+							<PassSelector
+								pushHistory={changePathWithLoading}
+								creatorUrl={creatorUrl}
+							/>
+						)}
 					</Route>
 					<Route path={creatorUrl} exact>
 						{/** Let's play monopoly. You landed to /creator. Go to home without passing Go! */}
@@ -601,6 +631,7 @@ function App(props: Props): JSX.Element {
 									exportTitle={props.exportTitle}
 									exportButtonRef={props.exportButtonRef}
 									exportErrors={exportErrors}
+									hiddenFields={props.hiddenFields}
 								/>
 							)
 						}

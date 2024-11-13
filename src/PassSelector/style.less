@@ -3,7 +3,7 @@
 #selector-app {
 	flex-grow: 1;
 	height: 100%;
-	width: 100vw;
+	width: 100%;
 
 	.pagetransition();
 
@@ -16,7 +16,7 @@
 		min-height: 100px;
 		max-height: 200px;
 		height: 30%;
-		width: 100vw;
+		width: 100%;
 
 		& > h2 {
 			color: #fff;
@@ -28,7 +28,7 @@
 	}
 
 	& .selection-window {
-		max-width: 1500px;
+		max-width: 100%;
 		margin: 0 auto;
 		height: calc(~"100vh - 30%");
 		scroll-behavior: smooth;
@@ -47,7 +47,7 @@
 				.scrollableWithoutScrollbars(x);
 				display: inline-flex;
 				width: 100%;
-				margin: 0 15px;
+				margin: 0 5px;
 
 				/**
 				* A class is applied based on the amount of items through
@@ -86,7 +86,7 @@
 					animation: PassFade 0.2s ease-in;
 					animation-fill-mode: forwards;
 					opacity: 0;
-					width: 230px;
+					width: 200px;
 					display: flex;
 					flex-direction: column;
 					position: relative; // for overlay
@@ -106,7 +106,7 @@
 					}
 
 					&:not(:last-child) {
-						margin-right: 3%;
+						margin-right: 5px;
 					}
 
 					& > .darkness-realm {

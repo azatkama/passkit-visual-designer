@@ -9,6 +9,7 @@ import { TemplateParameterProps } from "../../../../../Viewer";
 interface TextPanelProps extends SharedPanelProps {
 	value?: string;
 	templateParameters: Array<TemplateParameterProps>;
+	error: boolean;
 }
 
 export default function TextPanel(props: TextPanelProps) {
@@ -18,7 +19,6 @@ export default function TextPanel(props: TextPanelProps) {
 		props.value
 	);
 	const inputRef = React.useRef<HTMLInputElement>();
-
 	const required = (props.data.required && <span className="required" />) || null;
 
 	if (props.isSelected) {
@@ -41,6 +41,7 @@ export default function TextPanel(props: TextPanelProps) {
 					return ({ value: parameter.name, label: parameter.label });
 				})}
 			/>
+			{props.error && (<div className="field-error">Field is required</div>)}
 		</div>
 	);
 }

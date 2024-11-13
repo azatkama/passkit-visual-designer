@@ -107,7 +107,7 @@ export interface State {
 
 export interface ProjectOptions {
 	title?: string;
-	templateId?: number;
+	template?: number;
 	activeMediaLanguage: string;
 	id?: string;
 	savedAtTimestamp?: number;

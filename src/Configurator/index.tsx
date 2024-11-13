@@ -65,6 +65,7 @@ interface ConfiguratorProps extends ConfiguratorStore, DispatchProps, RouteCompo
 	showExportModal?: boolean;
 	exportButtonRef?: React.RefObject<HTMLButtonElement>;
 	exportErrors: ExportErrors;
+	hiddenFields: Array<string>;
 }
 
 interface ConfiguratorState {
@@ -143,11 +144,11 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 	}
 
 	static getDerivedStateFromProps(props: ConfiguratorProps) {
-		const { projectOptions: { title, templateId } } = props;
+		const { projectOptions: { title, template } } = props;
 		const { description, organizationName, passTypeIdentifier, teamIdentifier } =
 			props?.passProps ?? {};
 
-		if (!(description && organizationName && passTypeIdentifier && teamIdentifier && title && templateId)) {
+		if (!(description && organizationName && passTypeIdentifier && teamIdentifier && title && template)) {
 			return {
 				canBeExported: false,
 			};
@@ -277,7 +278,7 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 	}
 
 	changeProjectTemplateId(id: number) {
-		this.props.setProjectOption("templateId", id);
+		this.props.setProjectOption("template", id);
 	}
 
 	onActiveMediaLanguageChange(language: string) {
@@ -341,21 +342,34 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 			this.toggleModal(ModalIdentifier.Export);
 		}
 
-		const { projectOptions, passProps, media, translations } = this.props;
-		const { title, templateId } = projectOptions;
+		const { projectOptions, passProps, media, translations, hiddenFields } = this.props;
+		const { title, template } = projectOptions;
 		const { description, organizationName, passTypeIdentifier, teamIdentifier } = passProps ?? {};
+		const hasPassTypeIdentifier = hiddenFields.includes('passTypeIdentifier') ? true : !!passTypeIdentifier;
+		const hasTeamIdentifier = hiddenFields.includes('teamIdentifier') ? true : !!teamIdentifier;
 
-		if (!(description && organizationName && passTypeIdentifier && teamIdentifier && title && templateId) && !!this.props.onValidateFields) {
+		if (!(description && organizationName && hasPassTypeIdentifier && hasTeamIdentifier && title && template)
+			&& !!this.props.onValidateFields
+		) {
 			this.props.onValidateFields({
 				description: !description,
 				organizationName: !organizationName,
-				passTypeIdentifier: !passTypeIdentifier,
-				teamIdentifier: !teamIdentifier,
+				passTypeIdentifier: !hasPassTypeIdentifier,
+				teamIdentifier: !hasTeamIdentifier,
 				title: !title,
-				templateId: !templateId,
+				template: !template,
 			});
 
 			return;
+		} else {
+			this.props.onValidateFields({
+				description: false,
+				organizationName: false,
+				passTypeIdentifier: false,
+				teamIdentifier: false,
+				title: false,
+				template: false,
+			});
 		}
 
 		const buffer = await exportPass(passProps, media, translations);
@@ -363,7 +377,7 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 		if (this.props.onExport) {
 			this.props.onExport({
 				...projectOptions,
-				passFile: buffer,
+				file: buffer,
 			});
 
 			return;
@@ -383,7 +397,7 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 
 	render() {
 		const { projectOptions, usedLanguages, translations, passProps, media } = this.props;
-		const { title, templateId, activeMediaLanguage } = projectOptions;
+		const { title, template: templateId, activeMediaLanguage } = projectOptions;
 		const template = this.props.templates.find((template) => template.id === templateId);
 
 		const {
@@ -406,7 +420,7 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 							showBack={shouldShowPassBack}
 							showEmpty={emptyFieldsVisible}
 							projectTitle={title}
-							projectTemplateId={templateId}
+							projectTemplate={templateId}
 							changeProjectTitle={this.changeProjectTitle}
 							changeProjectTemplateId={this.changeProjectTemplateId}
 							templates={this.props.templates}
@@ -429,8 +443,10 @@ class Configurator extends React.Component<ConfiguratorProps, ConfiguratorState>
 						cancelFieldSelection={this.onVoidClick}
 						requestExport={(canBeExported && !this.props.exportButtonRef?.current && this.requestExport) || null}
 						exportTitle={this.props.exportTitle}
+						exportErrors={this.props.exportErrors}
 						onMediaEditRequest={this.toggleMediaModal}
 						templateParameters={template?.templateParameters || []}
+						hiddenFields={this.props.hiddenFields}
 					/>
 				</div>
 				<CSSTransition
