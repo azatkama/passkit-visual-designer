@@ -40,8 +40,8 @@ export enum PKBarcodeFormat {
 	None = "PKBarcodeFormatNone",
 
 	/** Generic descriptors */
-	Square = "PKBarcodeFormatSquare",
-	Rectangle = "PKBarcodeFormatRectangle",
+	Square = "PKBarcodeFormatQR",
+	Rectangle = "PKBarcodeFormatPDF417",
 }
 
 export enum PKDataDetectorType {
