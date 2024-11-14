@@ -37,7 +37,7 @@ export enum PKBarcodeFormat {
 	 * @TODO fix also styles for none and shapes
 	 */
 	/** Custom */
-	None = "PKBarcodeFormatNone",
+	None = "PKBarcodeFormatPDF417",
 
 	/** Generic descriptors */
 	Square = "PKBarcodeFormatQR",
