@@ -603,8 +603,12 @@ function App(props: Props): JSX.Element {
 							creatorUrl={creatorUrl}
 						/>
 					)} />
-					<Route path={creatorUrl} exact element={() =>
-						!(__DEV__ || store.getState()?.pass?.kind) ? <Navigate to={url} /> : (
+					<Route path={creatorUrl} exact element={() => {
+						if (!(__DEV__ || store.getState()?.pass?.kind)) {
+							return <Navigate to={url} />;
+						}
+
+						return (
 							<Configurator
 								templates={props.templates}
 								onExport={props.onExport}
@@ -614,8 +618,8 @@ function App(props: Props): JSX.Element {
 								exportErrors={exportErrors}
 								hiddenFields={props.hiddenFields}
 							/>
-						)
-					} />
+						);
+					}} />
 				</Routes>
 			</CSSTransition>
 		</SwitchTransition>
