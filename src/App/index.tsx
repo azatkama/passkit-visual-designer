@@ -588,10 +588,6 @@ function App(props: Props): JSX.Element {
 		}
 	});
 
-	if (!(__DEV__ || store.getState()?.pass?.kind)) {
-		return <Navigate to={url} />;
-	}
-
 	return (
 		<SwitchTransition>
 			<CSSTransition
@@ -601,25 +597,25 @@ function App(props: Props): JSX.Element {
 				mountOnEnter
 			>
 				<Routes>
-					<Route path={url} exact>
-						{!props.isLoading ? (
-							<PassSelector
-								pushHistory={changePathWithLoading}
-								creatorUrl={creatorUrl}
-							/>
-						) : <></>}
-					</Route>
-					<Route path={creatorUrl} exact>
-						<Configurator
-							templates={props.templates}
-							onExport={props.onExport}
-							onValidateFields={onValidateFields}
-							exportTitle={props.exportTitle}
-							exportButtonRef={props.exportButtonRef}
-							exportErrors={exportErrors}
-							hiddenFields={props.hiddenFields}
+					<Route path={url} exact element={!props.isLoading && (
+						<PassSelector
+							pushHistory={changePathWithLoading}
+							creatorUrl={creatorUrl}
 						/>
-					</Route>
+					)} />
+					<Route path={creatorUrl} exact element={() =>
+						!(__DEV__ || store.getState()?.pass?.kind) ? <Navigate to={url} /> : (
+							<Configurator
+								templates={props.templates}
+								onExport={props.onExport}
+								onValidateFields={onValidateFields}
+								exportTitle={props.exportTitle}
+								exportButtonRef={props.exportButtonRef}
+								exportErrors={exportErrors}
+								hiddenFields={props.hiddenFields}
+							/>
+						)
+					} />
 				</Routes>
 			</CSSTransition>
 		</SwitchTransition>
