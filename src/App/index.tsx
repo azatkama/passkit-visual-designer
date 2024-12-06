@@ -598,28 +598,25 @@ function App(props: Props): JSX.Element {
 			>
 				<Routes>
 					<Route path={url} exact>
-						{!props.isLoading && (
+						{!props.isLoading ? (
 							<PassSelector
 								pushHistory={changePathWithLoading}
 								creatorUrl={creatorUrl}
 							/>
-						)}
+						) : <div />}
 					</Route>
 					<Route path={creatorUrl} exact>
-						{/** Let's play monopoly. You landed to /creator. Go to home without passing Go! */}
-						{() =>
-							!(__DEV__ || store.getState()?.pass?.kind) ? <Navigate to={url} /> : (
-								<Configurator
-									templates={props.templates}
-									onExport={props.onExport}
-									onValidateFields={onValidateFields}
-									exportTitle={props.exportTitle}
-									exportButtonRef={props.exportButtonRef}
-									exportErrors={exportErrors}
-									hiddenFields={props.hiddenFields}
-								/>
-							)
-						}
+						{!(__DEV__ || store.getState()?.pass?.kind) ? <Navigate to={url} /> : (
+							<Configurator
+								templates={props.templates}
+								onExport={props.onExport}
+								onValidateFields={onValidateFields}
+								exportTitle={props.exportTitle}
+								exportButtonRef={props.exportButtonRef}
+								exportErrors={exportErrors}
+								hiddenFields={props.hiddenFields}
+							/>
+						)}
 					</Route>
 				</Routes>
 			</CSSTransition>
