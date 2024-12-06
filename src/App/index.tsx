@@ -1,11 +1,11 @@
 import * as React from "react";
 import {
 	BrowserRouter as Router,
-	Switch,
+	Routes,
 	Route,
-	Redirect,
+	Navigate,
 	useLocation,
-	useHistory,
+	useNavigate,
 } from "react-router-dom";
 import thunk from "redux-thunk";
 import localForage from "localforage";
@@ -23,6 +23,7 @@ import { ExportErrors, TemplateProps } from "../Configurator/Viewer";
 import JSZip from "jszip";
 import { PassKind } from "../model";
 import { useState } from "react";
+import useOnLocationChange from "../hooks/useOnLocationChange";
 
 // Defined by webpack
 declare const version: string;
@@ -141,7 +142,7 @@ interface Props {
 function App(props: Props): JSX.Element {
 	const [forageData, setForageData] = React.useState<Store.Forage.ForageStructure>();
 	const [isProcessingZipFile, setProcessingZipFile] = useState(false);
-	const history = useHistory();
+	const navigate = useNavigate();
 	const location = useLocation();
 	const [exportErrors, setExportErrors] = useState<ExportErrors>({
 		description: false,
@@ -191,7 +192,7 @@ function App(props: Props): JSX.Element {
 		wrapLoading(
 			() => {
 				preloadCallback?.();
-				history.push(path);
+				navigate(path);
 			},
 			null,
 			LOADING_TIME_MS
@@ -366,13 +367,13 @@ function App(props: Props): JSX.Element {
 					});
 
 					initializeStore(snapshot);
-					history.push(creatorUrl);
+					navigate(creatorUrl);
 				},
 				LOADING_TIME_MS,
 				LOADING_TIME_MS
 			);
 		},
-		[initializeStore, history]
+		[initializeStore, navigate]
 	);
 
 	const processUploadedFile = async (event: React.FormEvent<HTMLInputElement>, projectOptions: ProjectOptions) => {
@@ -571,38 +572,21 @@ function App(props: Props): JSX.Element {
 		};
 	}, []);
 
-	React.useEffect(() => {
-		const unlisten = history.listen(async (nextLocation, action) => {
-			if (action === "POP") {
-				if (location.pathname === creatorUrl && nextLocation.pathname === url) {
-					history.replace(url);
-				}
-
-				wrapLoading(
-					() => {
-						store.dispatch(Store.Forage.Reset());
-					},
-					LOADING_TIME_MS,
-					LOADING_TIME_MS
-				);
+	useOnLocationChange(async (nextLocation, action) => {
+		if (action === "POP") {
+			if (location.pathname === creatorUrl && nextLocation.pathname === url) {
+				navigate(url, { replace: true });
 			}
-		});
 
-		return () => {
-			/**
-			 * This is a side effect of using hooks.
-			 * What we need to achieve is to use location in the listener.
-			 * So to avoid retentions and get the latest location from its
-			 * hook we need to refresh the effect.
-			 * When hook is refreshed, listener get removed and we don't
-			 * receive the History POP notification because it is too late.
-			 * Therefore we delay the call to unlisten(), so we don't create
-			 * anyway several listeners and we still receive it.
-			 */
-
-			setTimeout(unlisten, 0);
-		};
-	}, [location]);
+			wrapLoading(
+				() => {
+					store.dispatch(Store.Forage.Reset());
+				},
+				LOADING_TIME_MS,
+				LOADING_TIME_MS
+			);
+		}
+	});
 
 	return (
 		<SwitchTransition>
@@ -612,7 +596,7 @@ function App(props: Props): JSX.Element {
 				timeout={LOADING_TIME_MS}
 				mountOnEnter
 			>
-				<Switch location={location}>
+				<Routes>
 					<Route path={url} exact>
 						{!props.isLoading && (
 							<PassSelector
@@ -624,7 +608,7 @@ function App(props: Props): JSX.Element {
 					<Route path={creatorUrl} exact>
 						{/** Let's play monopoly. You landed to /creator. Go to home without passing Go! */}
 						{() =>
-							!(__DEV__ || store.getState()?.pass?.kind) ? <Redirect to={url} /> : (
+							!(__DEV__ || store.getState()?.pass?.kind) ? <Navigate to={url} /> : (
 								<Configurator
 									templates={props.templates}
 									onExport={props.onExport}
@@ -637,7 +621,7 @@ function App(props: Props): JSX.Element {
 							)
 						}
 					</Route>
-				</Switch>
+				</Routes>
 			</CSSTransition>
 		</SwitchTransition>
 	);
