@@ -603,7 +603,7 @@ function App(props: Props): JSX.Element {
 								pushHistory={changePathWithLoading}
 								creatorUrl={creatorUrl}
 							/>
-						) : <div />}
+						) : <></>}
 					</Route>
 					<Route path={creatorUrl} exact>
 						{!(__DEV__ || store.getState()?.pass?.kind) ? <Navigate to={url} /> : (
