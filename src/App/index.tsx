@@ -588,6 +588,10 @@ function App(props: Props): JSX.Element {
 		}
 	});
 
+	if (!(__DEV__ || store.getState()?.pass?.kind)) {
+		return <Navigate to={url} />;
+	}
+
 	return (
 		<SwitchTransition>
 			<CSSTransition
@@ -606,19 +610,15 @@ function App(props: Props): JSX.Element {
 						) : <></>}
 					</Route>
 					<Route path={creatorUrl} exact>
-						{() =>
-							!(__DEV__ || store.getState()?.pass?.kind) ? <Navigate to={url} /> : (
-								<Configurator
-									templates={props.templates}
-									onExport={props.onExport}
-									onValidateFields={onValidateFields}
-									exportTitle={props.exportTitle}
-									exportButtonRef={props.exportButtonRef}
-									exportErrors={exportErrors}
-									hiddenFields={props.hiddenFields}
-								/>
-							)
-						}
+						<Configurator
+							templates={props.templates}
+							onExport={props.onExport}
+							onValidateFields={onValidateFields}
+							exportTitle={props.exportTitle}
+							exportButtonRef={props.exportButtonRef}
+							exportErrors={exportErrors}
+							hiddenFields={props.hiddenFields}
+						/>
 					</Route>
 				</Routes>
 			</CSSTransition>
