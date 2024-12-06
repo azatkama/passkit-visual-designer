@@ -588,6 +588,24 @@ function App(props: Props): JSX.Element {
 		}
 	});
 
+	const ConfiguratorPage = () => {
+		if (!(__DEV__ || store.getState()?.pass?.kind)) {
+			return <Navigate to={url} />;
+		}
+
+		return (
+			<Configurator
+				templates={props.templates}
+				onExport={props.onExport}
+				onValidateFields={onValidateFields}
+				exportTitle={props.exportTitle}
+				exportButtonRef={props.exportButtonRef}
+				exportErrors={exportErrors}
+				hiddenFields={props.hiddenFields}
+			/>
+		);
+	};
+
 	return (
 		<SwitchTransition>
 			<CSSTransition
@@ -603,23 +621,7 @@ function App(props: Props): JSX.Element {
 							creatorUrl={creatorUrl}
 						/>
 					)} />
-					<Route path={creatorUrl} exact element={() => {
-						if (!(__DEV__ || store.getState()?.pass?.kind)) {
-							return <Navigate to={url} />;
-						}
-
-						return (
-							<Configurator
-								templates={props.templates}
-								onExport={props.onExport}
-								onValidateFields={onValidateFields}
-								exportTitle={props.exportTitle}
-								exportButtonRef={props.exportButtonRef}
-								exportErrors={exportErrors}
-								hiddenFields={props.hiddenFields}
-							/>
-						);
-					}} />
+					<Route path={creatorUrl} exact element={<ConfiguratorPage />} />
 				</Routes>
 			</CSSTransition>
 		</SwitchTransition>
