@@ -556,18 +556,20 @@ function App(props: Props): JSX.Element {
 				timeout={LOADING_TIME_MS}
 				mountOnEnter
 			>
-				{!props.isLoading && !showConfigurator && <PassSelector onPassSelect={onPassSelect} />}
-				{showConfigurator && (
-					<Configurator
-						templates={props.templates}
-						onExport={props.onExport}
-						onValidateFields={onValidateFields}
-						exportTitle={props.exportTitle}
-						exportButtonRef={props.exportButtonRef}
-						exportErrors={exportErrors}
-						hiddenFields={props.hiddenFields}
-					/>
-				)}
+				<div>
+					{!props.isLoading && !showConfigurator && <PassSelector onPassSelect={onPassSelect} />}
+					{showConfigurator && (
+						<Configurator
+							templates={props.templates}
+							onExport={props.onExport}
+							onValidateFields={onValidateFields}
+							exportTitle={props.exportTitle}
+							exportButtonRef={props.exportButtonRef}
+							exportErrors={exportErrors}
+							hiddenFields={props.hiddenFields}
+						/>
+					)}
+				</div>
 			</CSSTransition>
 		</SwitchTransition>
 	);
