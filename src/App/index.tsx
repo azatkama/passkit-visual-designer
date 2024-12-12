@@ -556,7 +556,7 @@ function App(props: Props): JSX.Element {
 				timeout={LOADING_TIME_MS}
 				mountOnEnter
 			>
-				<div>
+				<div style={{ width: '100%' }}>
 					{!props.isLoading && !showConfigurator && <PassSelector onPassSelect={onPassSelect} />}
 					{showConfigurator && (
 						<Configurator
