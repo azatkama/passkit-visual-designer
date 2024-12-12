@@ -1,12 +1,4 @@
-import * as React from "react";
-import {
-	BrowserRouter as Router,
-	Routes,
-	Route,
-	Navigate,
-	useLocation,
-	useNavigate,
-} from "react-router-dom";
+import React, { useCallback, useState, useEffect } from "react";
 import thunk from "redux-thunk";
 import localForage from "localforage";
 import { Provider } from "react-redux";
@@ -22,11 +14,6 @@ import { v1 as uuid } from "uuid";
 import { ExportErrors, TemplateProps } from "../Configurator/Viewer";
 import JSZip from "jszip";
 import { PassKind } from "../model";
-import { useState } from "react";
-import useOnLocationChange from "../hooks/useOnLocationChange";
-
-// Defined by webpack
-declare const version: string;
 
 const ZIP_FILE_PATH_SPLIT_REGEX = /(?:(?<language>.+)\.lproj\/)?(?<realFileName>.+)?/;
 const ZIP_FILE_IGNORE_REGEX = /(^\.|manifest\.json|signature|personalization\.json)/;
@@ -49,9 +36,6 @@ interface ProjectOptions {
 	title: string;
 	template: number;
 }
-
-// Webpack valorized
-declare const __DEV__: boolean;
 
 /**
  * Loading time is used to sync loading
@@ -84,7 +68,6 @@ const store = createStore(
  */
 
 export default function AppRoutingLoaderContainer({
-	url = '/',
 	templates = [],
 	onExport,
   onValidateFields,
@@ -94,28 +77,18 @@ export default function AppRoutingLoaderContainer({
 	hiddenFields = [],
 	...rest
 }) {
-	const [isLoading, setLoading] = React.useState(true);
-
 	return (
 		<Provider store={store}>
-			<Router>
-				<CSSTransition mountOnEnter unmountOnExit in={isLoading} timeout={500}>
-					<LoaderFace />
-				</CSSTransition>
-				<App
-					isLoading={isLoading}
-					setLoading={setLoading}
-					url={url}
-					project={project}
-					templates={templates}
-					onExport={onExport}
-					onValidateFields={onValidateFields}
-					exportTitle={exportTitle}
-					exportButtonRef={exportButtonRef}
-					hiddenFields={hiddenFields}
-					{...rest}
-				/>
-			</Router>
+			<App
+				project={project}
+				templates={templates}
+				onExport={onExport}
+				onValidateFields={onValidateFields}
+				exportTitle={exportTitle}
+				exportButtonRef={exportButtonRef}
+				hiddenFields={hiddenFields}
+				{...rest}
+			/>
 		</Provider>
 	);
 }
@@ -127,9 +100,6 @@ interface Project {
 }
 
 interface Props {
-	isLoading: boolean;
-	setLoading(state: React.SetStateAction<boolean>): void;
-	url: string;
 	templates: Array<TemplateProps>;
 	onExport(data: Object): void;
 	onValidateFields(data: Object): void;
@@ -140,10 +110,10 @@ interface Props {
 }
 
 function App(props: Props): JSX.Element {
-	const [forageData, setForageData] = React.useState<Store.Forage.ForageStructure>();
+	const [isLoading, setLoading] = useState(true);
+	const [forageData, setForageData] = useState<Store.Forage.ForageStructure>();
 	const [isProcessingZipFile, setProcessingZipFile] = useState(false);
-	const navigate = useNavigate();
-	const location = useLocation();
+	const [showConfigurator, setShowConfigurator] = useState(false);
 	const [exportErrors, setExportErrors] = useState<ExportErrors>({
 		description: false,
 		organizationName: false,
@@ -152,12 +122,10 @@ function App(props: Props): JSX.Element {
 		title: false,
 		template: false,
 	});
-	const url = props.url;
-	const creatorUrl = `${url}/creator`;
 
-	const wrapLoading = React.useCallback(
+	const wrapLoading = useCallback(
 		async (phase: Function, minTimeBeforeExecution?: number, minTimeBeforeCompletion?: number) => {
-			props.setLoading(true);
+			setLoading(true);
 
 			await Promise.all([
 				minTimeBeforeCompletion
@@ -168,12 +136,12 @@ function App(props: Props): JSX.Element {
 					: Promise.resolve(phase()),
 			]);
 
-			props.setLoading(false);
+			setLoading(false);
 		},
 		[]
 	);
 
-	const onValidateFields = React.useCallback(
+	const onValidateFields = useCallback(
 		async (errors: Object) => {
 			setExportErrors((exportErrors) => {
 				const newExportErrors = { ...exportErrors, ...errors };
@@ -188,18 +156,18 @@ function App(props: Props): JSX.Element {
 		[props.onValidateFields]
 	);
 
-	const changePathWithLoading = React.useCallback((path: string, preloadCallback?: Function) => {
+	const onPassSelect = useCallback((preloadCallback?: Function) => {
 		wrapLoading(
 			() => {
 				preloadCallback?.();
-				navigate(path);
+				setShowConfigurator(true);
 			},
 			null,
 			LOADING_TIME_MS
 		);
 	}, []);
 
-	const refreshForageCallback = React.useCallback(async () => {
+	const refreshForageCallback = useCallback(async () => {
 		const slices: (keyof Store.Forage.ForageStructure)[] = ["projects"];
 
 		const data = Object.assign(
@@ -216,7 +184,7 @@ function App(props: Props): JSX.Element {
 		setForageData(data);
 	}, []);
 
-	const initializeStore = React.useCallback(
+	const initializeStore = useCallback(
 		async (snapshot: Store.State) => {
 			sessionStorage.clear();
 			/**
@@ -270,7 +238,7 @@ function App(props: Props): JSX.Element {
 		[forageData?.projects]
 	);
 
-	const initializeStoreByProjectID = React.useCallback(
+	const initializeStoreByProjectID = useCallback(
 		(projectID: string) => {
 			if (!forageData.projects[projectID]) {
 				throw `No project with id ${projectID}. Is there any kind of caching happening?`;
@@ -283,7 +251,7 @@ function App(props: Props): JSX.Element {
 		[initializeStore]
 	);
 
-	const createProjectFromArchive = React.useCallback(
+	const createProjectFromArchive = useCallback(
 		(data: StateLookalike) => {
 			wrapLoading(
 				() => {
@@ -367,20 +335,20 @@ function App(props: Props): JSX.Element {
 					});
 
 					initializeStore(snapshot);
-					navigate(creatorUrl);
+					setShowConfigurator(true);
 				},
 				LOADING_TIME_MS,
 				LOADING_TIME_MS
 			);
 		},
-		[initializeStore, navigate]
+		[initializeStore]
 	);
 
 	const processUploadedFile = async (event: React.FormEvent<HTMLInputElement>, projectOptions: ProjectOptions) => {
 		const { currentTarget } = event;
 		const { files: uploadFiles } = currentTarget;
 
-		props.setLoading(true);
+		setLoading(true);
 		setProcessingZipFile(true);
 
 		try {
@@ -534,19 +502,19 @@ function App(props: Props): JSX.Element {
 				throw new Error("Missing pass.json");
 			}
 
-			props.setLoading(false);
+			setLoading(false);
 			setProcessingZipFile(false);
 
 			return createProjectFromArchive(parsedPayload);
 		} catch (err) {
 			this.toggleErrorOverlay(`Unable to complete import. ${err.message}`);
 
-			props.setLoading(false);
+			setLoading(false);
 			setProcessingZipFile(false);
 		}
 	}
 
-	React.useEffect(() => {
+	useEffect(() => {
 		/**
 		 * Removing previously created records.
 		 * Otherwise we might occour in orphan blob
@@ -557,7 +525,7 @@ function App(props: Props): JSX.Element {
 		sessionStorage.clear();
 
 		if (props.project?.file) {
-			props.setLoading(true);
+			setLoading(true);
 			processUploadedFile(
 				{ currentTarget: { files: [props.project.file] } },
 				{ title: props.project?.title, template: props.project?.template }
@@ -572,59 +540,33 @@ function App(props: Props): JSX.Element {
 		};
 	}, []);
 
-	useOnLocationChange(async (nextLocation, action) => {
-		if (action === "POP") {
-			if (location.pathname === creatorUrl && nextLocation.pathname === url) {
-				navigate(url, { replace: true });
-			}
-
-			wrapLoading(
-				() => {
-					store.dispatch(Store.Forage.Reset());
-				},
-				LOADING_TIME_MS,
-				LOADING_TIME_MS
-			);
-		}
-	});
-
-	const ConfiguratorPage = () => {
-		if (!(__DEV__ || store.getState()?.pass?.kind)) {
-			return <Navigate to={url} />;
-		}
-
-		return (
-			<Configurator
-				templates={props.templates}
-				onExport={props.onExport}
-				onValidateFields={onValidateFields}
-				exportTitle={props.exportTitle}
-				exportButtonRef={props.exportButtonRef}
-				exportErrors={exportErrors}
-				hiddenFields={props.hiddenFields}
-			/>
-		);
-	};
-
 	return (
-		<SwitchTransition>
-			<CSSTransition
-				// Fallback here is needed to avoid weird animation looping (https://git.io/Jvbpa)
-				key={location.key || ""}
-				timeout={LOADING_TIME_MS}
-				mountOnEnter
-			>
-				<Routes>
-					<Route path={url} exact element={!props.isLoading && (
-						<PassSelector
-							pushHistory={changePathWithLoading}
-							creatorUrl={creatorUrl}
-						/>
-					)} />
-					<Route path={creatorUrl} exact element={<ConfiguratorPage />} />
-				</Routes>
+		<>
+			<CSSTransition mountOnEnter unmountOnExit in={isLoading} timeout={500}>
+				<LoaderFace />
 			</CSSTransition>
-		</SwitchTransition>
+			<SwitchTransition>
+				<CSSTransition
+					// Fallback here is needed to avoid weird animation looping (https://git.io/Jvbpa)
+					key={showConfigurator ? 'configurator' : 'pass-selector'}
+					timeout={LOADING_TIME_MS}
+					mountOnEnter
+				>
+					{!isLoading && !showConfigurator && <PassSelector onPassSelect={onPassSelect} />}
+					{showConfigurator && (
+						<Configurator
+							templates={props.templates}
+							onExport={props.onExport}
+							onValidateFields={onValidateFields}
+							exportTitle={props.exportTitle}
+							exportButtonRef={props.exportButtonRef}
+							exportErrors={exportErrors}
+							hiddenFields={props.hiddenFields}
+						/>
+					)}
+				</CSSTransition>
+			</SwitchTransition>
+		</>
 	);
 }
 
@@ -636,101 +578,3 @@ function createDelayedPromise(timeout: number, execution?: Function) {
 		}, timeout);
 	});
 }
-
-// Sample data
-
-/*
-const sampleData = {
-	media: {
-		logoText: "blablabla",
-		headerFields: [
-			{
-				label: "Data",
-				key: "departing_date",
-				value: "10/04/1996",
-			}, {
-				label: "Ora",
-				key: "departing_time",
-				value: "10:30",
-			}, {
-				label: "test",
-				key: "departing_time",
-				value: "10:30",
-			}
-		],
-		// BoardingPass
-		primaryFields: [
-			{
-				key: "starting_point",
-				value: "ARN",
-				label: "stockholm-arlanda"
-			}, {
-				key: "finish_point",
-				value: "CPH",
-				label: "copenhagen t2"
-			}
-		],
-		// Coupon
-		// primaryFields: [
-		// 	{
-		// 		fieldKey: "starting_point",
-		// 		value: "21,75 USD",
-		// 		label: "remaining balance"
-		// 	}
-		// ],
-		// Event Ticket
-		// primaryFields: [
-		// 	{
-		// 		"fieldKey": "event",
-		// 		"label": "EVENT",
-		// 		"value": "The Beat Goes On"
-		// 	}
-		// ],
-		auxiliaryFields: [
-			{
-				key: "passenger",
-				label: "passeggero",
-				value: "Alexander Patrick Cerutti"
-			},
-			{
-				key: "flight",
-				label: "n. volo",
-				value: "FR1328"
-			},
-			{
-				key: "seq",
-				label: "sequenza",
-				value: "8"
-			}
-		],
-		// Primary Fields
-		secondaryFields: [
-			{
-				"key": "gateClose",
-				"label": "Il Gate Chiude",
-				"dateStyle": PKDateStyle.None,
-				"timeStyle": PKDateStyle.Short,
-				"value": "09:20"
-			},
-			{
-				"key": "queue",
-				"label": "Fila",
-				"value": "Priorità"
-			},
-			{
-				"key": "seat",
-				"label": "Posto*",
-				"value": "16C"
-			}
-		],
-		// Event Ticket
-		// secondaryFields: [
-		// 	{
-		// 		"fieldKey": "loc",
-		// 		"label": "LOCATION",
-		// 		"value": "Moscone West"
-		// 	}
-		// ],
-	}
-};
-*/
