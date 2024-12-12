@@ -77,9 +77,16 @@ export default function AppRoutingLoaderContainer({
 	hiddenFields = [],
 	...rest
 }) {
+	const [isLoading, setLoading] = useState(true);
+
 	return (
 		<Provider store={store}>
+			<CSSTransition mountOnEnter unmountOnExit in={isLoading} timeout={500}>
+				<LoaderFace />
+			</CSSTransition>
 			<App
+				isLoading={isLoading}
+				setLoading={setLoading}
 				project={project}
 				templates={templates}
 				onExport={onExport}
@@ -100,6 +107,8 @@ interface Project {
 }
 
 interface Props {
+	isLoading: boolean;
+	setLoading(state: React.SetStateAction<boolean>): void;
 	templates: Array<TemplateProps>;
 	onExport(data: Object): void;
 	onValidateFields(data: Object): void;
@@ -110,7 +119,6 @@ interface Props {
 }
 
 function App(props: Props): JSX.Element {
-	const [isLoading, setLoading] = useState(true);
 	const [forageData, setForageData] = useState<Store.Forage.ForageStructure>();
 	const [isProcessingZipFile, setProcessingZipFile] = useState(false);
 	const [showConfigurator, setShowConfigurator] = useState(false);
@@ -125,7 +133,7 @@ function App(props: Props): JSX.Element {
 
 	const wrapLoading = useCallback(
 		async (phase: Function, minTimeBeforeExecution?: number, minTimeBeforeCompletion?: number) => {
-			setLoading(true);
+			props.setLoading(true);
 
 			await Promise.all([
 				minTimeBeforeCompletion
@@ -136,7 +144,7 @@ function App(props: Props): JSX.Element {
 					: Promise.resolve(phase()),
 			]);
 
-			setLoading(false);
+			props.setLoading(false);
 		},
 		[]
 	);
@@ -348,7 +356,7 @@ function App(props: Props): JSX.Element {
 		const { currentTarget } = event;
 		const { files: uploadFiles } = currentTarget;
 
-		setLoading(true);
+		props.setLoading(true);
 		setProcessingZipFile(true);
 
 		try {
@@ -502,14 +510,14 @@ function App(props: Props): JSX.Element {
 				throw new Error("Missing pass.json");
 			}
 
-			setLoading(false);
+			props.setLoading(false);
 			setProcessingZipFile(false);
 
 			return createProjectFromArchive(parsedPayload);
 		} catch (err) {
 			this.toggleErrorOverlay(`Unable to complete import. ${err.message}`);
 
-			setLoading(false);
+			props.setLoading(false);
 			setProcessingZipFile(false);
 		}
 	}
@@ -525,7 +533,7 @@ function App(props: Props): JSX.Element {
 		sessionStorage.clear();
 
 		if (props.project?.file) {
-			setLoading(true);
+			props.setLoading(true);
 			processUploadedFile(
 				{ currentTarget: { files: [props.project.file] } },
 				{ title: props.project?.title, template: props.project?.template }
@@ -541,32 +549,27 @@ function App(props: Props): JSX.Element {
 	}, []);
 
 	return (
-		<>
-			<CSSTransition mountOnEnter unmountOnExit in={isLoading} timeout={500}>
-				<LoaderFace />
+		<SwitchTransition>
+			<CSSTransition
+				// Fallback here is needed to avoid weird animation looping (https://git.io/Jvbpa)
+				key={showConfigurator ? 'configurator' : 'pass-selector'}
+				timeout={LOADING_TIME_MS}
+				mountOnEnter
+			>
+				{!props.isLoading && !showConfigurator && <PassSelector onPassSelect={onPassSelect} />}
+				{showConfigurator && (
+					<Configurator
+						templates={props.templates}
+						onExport={props.onExport}
+						onValidateFields={onValidateFields}
+						exportTitle={props.exportTitle}
+						exportButtonRef={props.exportButtonRef}
+						exportErrors={exportErrors}
+						hiddenFields={props.hiddenFields}
+					/>
+				)}
 			</CSSTransition>
-			<SwitchTransition>
-				<CSSTransition
-					// Fallback here is needed to avoid weird animation looping (https://git.io/Jvbpa)
-					key={showConfigurator ? 'configurator' : 'pass-selector'}
-					timeout={LOADING_TIME_MS}
-					mountOnEnter
-				>
-					{!isLoading && !showConfigurator && <PassSelector onPassSelect={onPassSelect} />}
-					{showConfigurator && (
-						<Configurator
-							templates={props.templates}
-							onExport={props.onExport}
-							onValidateFields={onValidateFields}
-							exportTitle={props.exportTitle}
-							exportButtonRef={props.exportButtonRef}
-							exportErrors={exportErrors}
-							hiddenFields={props.hiddenFields}
-						/>
-					)}
-				</CSSTransition>
-			</SwitchTransition>
-		</>
+		</SwitchTransition>
 	);
 }
 
